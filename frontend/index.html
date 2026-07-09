@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ShareBite | Zero Hunger Platform</title>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
+    body { background: #f5f9f5; color: #1c2a1f; }
+
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 7%; background: white;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .logo { font-size: 28px; font-weight: 800; color: #168136; }
+    nav a { margin: 0 14px; text-decoration: none; color: #2e3b31; font-weight: 600; }
+
+    .hero {
+      display: grid; grid-template-columns: 1fr 1fr; align-items: center;
+      gap: 40px; padding: 70px 7%;
+      background: linear-gradient(120deg, #ffffff, #e9f7ec);
+    }
+
+    .hero h1 { font-size: 58px; line-height: 1.1; margin-bottom: 20px; }
+    .hero h1 span { color: #1b9b3e; }
+    .hero p { color: #5f6f63; line-height: 1.7; margin-bottom: 25px; font-size: 18px; }
+
+    .btn {
+      padding: 14px 26px; border: none; border-radius: 30px;
+      background: #1b9b3e; color: white; font-weight: 700;
+      cursor: pointer; margin-right: 10px;
+    }
+
+    .btn:hover { background: #14752e; }
+
+    .hero-image {
+      background: white; padding: 25px; border-radius: 30px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.08); text-align: center;
+    }
+
+    .hero-image img { width: 100%; border-radius: 20px; }
+
+    section { padding: 70px 7%; }
+    .section-title { text-align: center; font-size: 36px; margin-bottom: 40px; }
+
+    .features, .dashboard {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 25px;
+    }
+
+    .card, .form-box, .listing-box, .stat {
+      background: white; padding: 28px; border-radius: 25px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    }
+
+    .card h3, .form-box h2, .listing-box h2 { margin-bottom: 15px; color: #168136; }
+    .card p { color: #66756a; line-height: 1.6; }
+
+    .donation-section {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 35px; align-items: start;
+    }
+
+    input {
+      width: 100%; padding: 14px; margin-bottom: 14px;
+      border-radius: 14px; border: 1px solid #d9e6db; font-size: 15px;
+    }
+
+    .listing-item { padding: 16px 0; border-bottom: 1px solid #edf2ee; }
+    .listing-item h4 { margin-bottom: 5px; color: #168136; }
+    .listing-item p { color: #66756a; font-size: 14px; margin-bottom: 4px; }
+
+    .stat { text-align: center; }
+    .stat h2 { color: #168136; font-size: 40px; margin-bottom: 8px; }
+
+    footer { text-align: center; padding: 30px; background: #102015; color: white; margin-top: 50px; }
+
+    @media(max-width:900px){
+      .hero, .donation-section, .features, .dashboard { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 42px; }
+      nav { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">🌿 ShareBite</div>
+  <nav>
+    <a href="#">Home</a>
+    <a href="#features">Features</a>
+    <a href="#donate">Donate</a>
+    <a href="#impact">Impact</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div>
+    <h1>Reduce Food Waste <span>Fight Hunger</span></h1>
+    <p>
+      ShareBite is a cloud-based food redistribution platform designed to connect
+      food donors with communities in need using scalable AWS serverless architecture.
+    </p>
+    <button class="btn" onclick="document.getElementById('donate').scrollIntoView({behavior:'smooth'})">Donate Food</button>
+    <button class="btn" onclick="loadFoodListings()">Find Food</button>
+  </div>
+
+  <div class="hero-image">
+    <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?q=80&w=1200&auto=format&fit=crop" alt="Fresh vegetables">
+  </div>
+</section>
+
+<section id="features">
+  <h2 class="section-title">Platform Features</h2>
+
+  <div class="features">
+    <div class="card">
+      <h3>📦 Food Donation</h3>
+      <p>Donors can upload surplus food details quickly and make them available for collection.</p>
+    </div>
+
+    <div class="card">
+      <h3>⚡ Real-Time Listings</h3>
+      <p>Available food listings are retrieved live using API Gateway, Lambda, and DynamoDB.</p>
+    </div>
+
+    <div class="card">
+      <h3>☁ AWS Serverless</h3>
+      <p>The backend uses AWS Lambda, DynamoDB, API Gateway, S3, CloudWatch, and Cognito.</p>
+    </div>
+  </div>
+</section>
+
+<section id="donate">
+  <div class="donation-section">
+    <div class="form-box">
+      <h2>Donate Food</h2>
+
+      <input id="foodName" placeholder="Food Name">
+      <input id="quantity" placeholder="Quantity">
+      <input id="location" placeholder="Location">
+      <input id="expiryTime" placeholder="Expiry Time">
+      <input id="donorName" placeholder="Donor Name">
+      <input id="contactNumber" placeholder="Contact Number">
+
+      <button class="btn" onclick="submitFood()">Submit Donation</button>
+    </div>
+
+    <div class="listing-box">
+      <h2>Available Food Listings</h2>
+      <div id="foodListings">
+        <p>Loading listings...</p>
+      </div>
+      <br>
+      <button class="btn" onclick="loadFoodListings()">Refresh Listings</button>
+    </div>
+  </div>
+</section>
+
+<section id="impact">
+  <h2 class="section-title">Community Impact</h2>
+
+  <div class="dashboard">
+    <div class="stat">
+      <h2>120+</h2>
+      <p>Meals Shared</p>
+    </div>
+
+    <div class="stat">
+      <h2>65+</h2>
+      <p>Families Supported</p>
+    </div>
+
+    <div class="stat">
+      <h2>340kg</h2>
+      <p>Food Waste Reduced</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 ShareBite | Zero Hunger Cloud Platform</p>
+</footer>
+
+<script>
+  const API_URL = "https://gtti72vg8c.execute-api.us-east-1.amazonaws.com/prod/food";
+
+  async function submitFood() {
+    const data = {
+      foodName: document.getElementById("foodName").value.trim(),
+      quantity: document.getElementById("quantity").value.trim(),
+      location: document.getElementById("location").value.trim(),
+      expiryTime: document.getElementById("expiryTime").value.trim(),
+      donorName: document.getElementById("donorName").value.trim(),
+      contactNumber: document.getElementById("contactNumber").value.trim()
+    };
+
+    if (!data.foodName || !data.quantity || !data.location) {
+      alert("Please enter food name, quantity, and location.");
+      return;
+    }
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      const resultText = await response.text();
+      let result;
+
+      try {
+        result = JSON.parse(resultText);
+      } catch {
+        result = { message: resultText };
+      }
+
+      if (!response.ok) {
+        alert("Backend error: " + (result.message || result.error || response.status));
+        console.log(result);
+        return;
+      }
+
+      alert(result.message || "Food listing added successfully.");
+
+      document.getElementById("foodName").value = "";
+      document.getElementById("quantity").value = "";
+      document.getElementById("location").value = "";
+      document.getElementById("expiryTime").value = "";
+      document.getElementById("donorName").value = "";
+      document.getElementById("contactNumber").value = "";
+
+      loadFoodListings();
+
+    } catch (error) {
+      alert("Error connecting to backend API: " + error.message);
+      console.log("POST error:", error);
+    }
+  }
+
+  async function loadFoodListings() {
+    const container = document.getElementById("foodListings");
+    container.innerHTML = "<p>Loading listings...</p>";
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "GET",
+        mode: "cors"
+      });
+
+      const result = await response.json();
+      const items = Array.isArray(result) ? result : (result.items || []);
+
+      if (!response.ok) {
+        container.innerHTML = "<p>Backend returned an error.</p>";
+        console.log(result);
+        return;
+      }
+
+      if (items.length === 0) {
+        container.innerHTML = "<p>No food listings available.</p>";
+        return;
+      }
+
+      container.innerHTML = items.map(item => `
+        <div class="listing-item">
+          <h4>${item.foodName || "Unnamed Food"}</h4>
+          <p><strong>Quantity:</strong> ${item.quantity || "N/A"}</p>
+          <p><strong>Location:</strong> ${item.location || "N/A"}</p>
+          <p><strong>Expiry:</strong> ${item.expiryTime || "N/A"}</p>
+          <p><strong>Donor:</strong> ${item.donorName || "N/A"}</p>
+          <p><strong>Contact:</strong> ${item.contactNumber || "N/A"}</p>
+          <p><strong>Status:</strong> ${item.status || "Available"}</p>
+        </div>
+      `).join("");
+
+    } catch (error) {
+      container.innerHTML = "<p>Failed to load listings. Check API connection.</p>";
+      console.log("GET error:", error);
+    }
+  }
+
+  window.onload = function () {
+    loadFoodListings();
+  };
+</script>
+
+</body>
+</html>

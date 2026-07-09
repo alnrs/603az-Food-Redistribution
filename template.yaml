@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Zero Hunger Food Redistribution Platform - Lab Compatible Serverless Stack
+
+Resources:
+
+  FoodListingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: FoodListings
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: listingId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: listingId
+          KeyType: HASH
+
+  AppSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: zero-hunger-app-secret
+      Description: Secret placeholder for Zero Hunger application configuration
+      SecretString: '{"appName":"ZeroHunger","environment":"development"}'
+
+  FoodNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub zero-hunger-food-notifications-${AWS::AccountId}-${AWS::Region}
+      DisplayName: Zero Hunger Food Notifications
+
+  FoodUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: ZeroHungerUserPool
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+
+  FoodUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: ZeroHungerWebClient
+      UserPoolId: !Ref FoodUserPool
+      GenerateSecret: false
+
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub zero-hunger-frontend-${AWS::AccountId}-${AWS::Region}
+
+  FoodBackendLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/ZeroHungerBackend
+      RetentionInDays: 7
+
+  FoodBackendFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ZeroHungerBackend
+      Runtime: python3.12
+      Handler: lambda_function.lambda_handler
+      Role: arn:aws:iam::126749442836:role/LabRole
+      Timeout: 30
+      Code:
+        S3Bucket: cf-templates-wb956zxndjo3-us-east-1
+        S3Key: zerohungerzip.zip
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref FoodListingsTable
+          SNS_TOPIC_ARN: !Ref FoodNotificationTopic
+
+  FoodHttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: ZeroHungerAPI
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+
+  FoodApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref FoodHttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt FoodBackendFunction.Arn
+      PayloadFormatVersion: '2.0'
+
+  FoodApiRoutePost:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref FoodHttpApi
+      RouteKey: POST /food
+      Target: !Sub integrations/${FoodApiIntegration}
+
+  FoodApiRouteGet:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref FoodHttpApi
+      RouteKey: GET /food
+      Target: !Sub integrations/${FoodApiIntegration}
+
+  FoodApiRouteOptions:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref FoodHttpApi
+      RouteKey: OPTIONS /food
+      Target: !Sub integrations/${FoodApiIntegration}
+
+  FoodApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref FoodHttpApi
+      StageName: prod
+      AutoDeploy: true
+
+  LambdaApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref FoodBackendFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${FoodHttpApi}/*/*/*
+
+Outputs:
+
+  ApiEndpoint:
+    Description: API Gateway endpoint
+    Value: !Sub https://${FoodHttpApi}.execute-api.${AWS::Region}.amazonaws.com/prod/food
+
+  DynamoDBTableName:
+    Description: DynamoDB table name
+    Value: !Ref FoodListingsTable
+
+  LambdaFunctionName:
+    Description: Lambda function name
+    Value: !Ref FoodBackendFunction
+
+  FrontendBucketName:
+    Description: S3 frontend bucket name
+    Value: !Ref FrontendBucket
+
+  CognitoUserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref FoodUserPool
+
+  CognitoClientId:
+    Description: Cognito App Client ID
+    Value: !Ref FoodUserPoolClient
+
+  SecretName:
+    Description: Secrets Manager secret name
+    Value: !Ref AppSecret
+
+  SNSTopicArn:
+    Description: SNS Topic ARN
+    Value: !Ref FoodNotificationTopic
+
+  SNSTopicName:
+    Description: SNS Topic Name
+    Value: !GetAtt FoodNotificationTopic.TopicName
