@@ -3,82 +3,319 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="ShareBite is a cloud-based food redistribution platform that connects food donors with communities in need." />
   <title>ShareBite | Zero Hunger Platform</title>
 
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", Arial, sans-serif; }
-    body { background: #f5f9f5; color: #1c2a1f; }
-
-    header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 18px 7%; background: white;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
-      position: sticky; top: 0; z-index: 100;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Arial, sans-serif;
     }
 
-    .logo { font-size: 28px; font-weight: 800; color: #168136; }
-    nav a { margin: 0 14px; text-decoration: none; color: #2e3b31; font-weight: 600; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: #f5f9f5;
+      color: #1c2a1f;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 7%;
+      background: white;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 800;
+      color: #168136;
+    }
+
+    nav a {
+      margin: 0 14px;
+      text-decoration: none;
+      color: #2e3b31;
+      font-weight: 600;
+    }
+
+    nav a:hover { color: #168136; }
 
     .hero {
-      display: grid; grid-template-columns: 1fr 1fr; align-items: center;
-      gap: 40px; padding: 70px 7%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 40px;
+      padding: 70px 7%;
       background: linear-gradient(120deg, #ffffff, #e9f7ec);
     }
 
-    .hero h1 { font-size: 58px; line-height: 1.1; margin-bottom: 20px; }
+    .hero h1 {
+      font-size: 58px;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+
     .hero h1 span { color: #1b9b3e; }
-    .hero p { color: #5f6f63; line-height: 1.7; margin-bottom: 25px; font-size: 18px; }
+
+    .hero p {
+      color: #5f6f63;
+      line-height: 1.7;
+      margin-bottom: 25px;
+      font-size: 18px;
+    }
 
     .btn {
-      padding: 14px 26px; border: none; border-radius: 30px;
-      background: #1b9b3e; color: white; font-weight: 700;
-      cursor: pointer; margin-right: 10px;
+      padding: 14px 26px;
+      border: none;
+      border-radius: 30px;
+      background: #1b9b3e;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      margin-right: 10px;
+      transition: 0.2s ease;
     }
 
-    .btn:hover { background: #14752e; }
+    .btn:hover {
+      background: #14752e;
+      transform: translateY(-1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
 
     .hero-image {
-      background: white; padding: 25px; border-radius: 30px;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.08); text-align: center;
+      background: white;
+      padding: 25px;
+      border-radius: 30px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+      text-align: center;
     }
 
-    .hero-image img { width: 100%; border-radius: 20px; }
+    .hero-image img {
+      width: 100%;
+      border-radius: 20px;
+    }
 
     section { padding: 70px 7%; }
-    .section-title { text-align: center; font-size: 36px; margin-bottom: 40px; }
 
-    .features, .dashboard {
-      display: grid; grid-template-columns: repeat(3,1fr); gap: 25px;
+    .section-title {
+      text-align: center;
+      font-size: 36px;
+      margin-bottom: 15px;
     }
 
-    .card, .form-box, .listing-box, .stat {
-      background: white; padding: 28px; border-radius: 25px;
+    .section-subtitle {
+      max-width: 760px;
+      margin: 0 auto 40px;
+      text-align: center;
+      color: #66756a;
+      line-height: 1.7;
+    }
+
+    .features,
+    .dashboard,
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 25px;
+    }
+
+    .card,
+    .form-box,
+    .listing-box,
+    .stat {
+      background: white;
+      padding: 28px;
+      border-radius: 25px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.06);
     }
 
-    .card h3, .form-box h2, .listing-box h2 { margin-bottom: 15px; color: #168136; }
-    .card p { color: #66756a; line-height: 1.6; }
+    .card h3,
+    .form-box h2,
+    .listing-box h2 {
+      margin-bottom: 15px;
+      color: #168136;
+    }
+
+    .card p {
+      color: #66756a;
+      line-height: 1.6;
+    }
+
+    .step-number {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #e9f7ec;
+      color: #168136;
+      font-weight: 800;
+      margin-bottom: 15px;
+    }
 
     .donation-section {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 35px; align-items: start;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 35px;
+      align-items: start;
+    }
+
+    .form-group { margin-bottom: 14px; }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 700;
+      color: #334a39;
     }
 
     input {
-      width: 100%; padding: 14px; margin-bottom: 14px;
-      border-radius: 14px; border: 1px solid #d9e6db; font-size: 15px;
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid #d9e6db;
+      font-size: 15px;
+      outline: none;
     }
 
-    .listing-item { padding: 16px 0; border-bottom: 1px solid #edf2ee; }
-    .listing-item h4 { margin-bottom: 5px; color: #168136; }
-    .listing-item p { color: #66756a; font-size: 14px; margin-bottom: 4px; }
+    input:focus {
+      border-color: #1b9b3e;
+      box-shadow: 0 0 0 3px rgba(27,155,62,0.12);
+    }
+
+    .required { color: #b42318; }
+
+    .form-note {
+      color: #66756a;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 4px 0 18px;
+    }
+
+    .message {
+      display: none;
+      margin-top: 16px;
+      padding: 13px 15px;
+      border-radius: 12px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .message.show { display: block; }
+
+    .message.success {
+      background: #e9f8ef;
+      border: 1px solid #a8dfb8;
+      color: #126a2d;
+    }
+
+    .message.error {
+      background: #fff0ef;
+      border: 1px solid #f0b7b2;
+      color: #a1261d;
+    }
+
+    .message.info {
+      background: #eef6ff;
+      border: 1px solid #bfd9f5;
+      color: #245b8f;
+    }
+
+    .listing-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .listing-controls input { margin-bottom: 0; }
+
+    .listing-item {
+      padding: 18px 0;
+      border-bottom: 1px solid #edf2ee;
+    }
+
+    .listing-item:last-child { border-bottom: none; }
+
+    .listing-item h4 {
+      margin-bottom: 8px;
+      color: #168136;
+      font-size: 19px;
+    }
+
+    .listing-item p {
+      color: #66756a;
+      font-size: 14px;
+      margin-bottom: 5px;
+      line-height: 1.5;
+    }
+
+    .status {
+      display: inline-block;
+      margin-top: 7px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      background: #e9f8ef;
+      color: #14752e;
+      font-size: 12px;
+      font-weight: 800;
+    }
 
     .stat { text-align: center; }
-    .stat h2 { color: #168136; font-size: 40px; margin-bottom: 8px; }
 
-    footer { text-align: center; padding: 30px; background: #102015; color: white; margin-top: 50px; }
+    .stat h2 {
+      color: #168136;
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
 
-    @media(max-width:900px){
-      .hero, .donation-section, .features, .dashboard { grid-template-columns: 1fr; }
+    .about-box {
+      background: white;
+      padding: 35px;
+      border-radius: 25px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+      max-width: 980px;
+      margin: auto;
+    }
+
+    .about-box p {
+      color: #66756a;
+      line-height: 1.8;
+      margin-bottom: 14px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 30px;
+      background: #102015;
+      color: white;
+      margin-top: 50px;
+    }
+
+    footer p { margin-bottom: 5px; }
+
+    @media(max-width:900px) {
+      .hero,
+      .donation-section,
+      .features,
+      .dashboard,
+      .steps {
+        grid-template-columns: 1fr;
+      }
+
       .hero h1 { font-size: 42px; }
       nav { display: none; }
     }
@@ -90,105 +327,303 @@
 <header>
   <div class="logo">🌿 ShareBite</div>
   <nav>
-    <a href="#">Home</a>
+    <a href="#home">Home</a>
+    <a href="#how">How It Works</a>
     <a href="#features">Features</a>
     <a href="#donate">Donate</a>
     <a href="#impact">Impact</a>
+    <a href="#about">About</a>
   </nav>
 </header>
 
-<section class="hero">
+<section class="hero" id="home">
   <div>
     <h1>Reduce Food Waste <span>Fight Hunger</span></h1>
     <p>
       ShareBite is a cloud-based food redistribution platform designed to connect
-      food donors with communities in need using scalable AWS serverless architecture.
+      households, restaurants, supermarkets and other food donors with people and
+      communities in need through a scalable AWS serverless architecture.
     </p>
-    <button class="btn" onclick="document.getElementById('donate').scrollIntoView({behavior:'smooth'})">Donate Food</button>
-    <button class="btn" onclick="loadFoodListings()">Find Food</button>
+
+    <button class="btn" type="button"
+      onclick="document.getElementById('donate').scrollIntoView({behavior:'smooth'})">
+      Donate Food
+    </button>
+
+    <button class="btn" type="button"
+      onclick="document.getElementById('foodListings').scrollIntoView({behavior:'smooth'}); loadFoodListings();">
+      Find Food
+    </button>
   </div>
 
   <div class="hero-image">
-    <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?q=80&w=1200&auto=format&fit=crop" alt="Fresh vegetables">
+    <img
+      src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?q=80&w=1200&auto=format&fit=crop"
+      alt="Fresh fruit and vegetables prepared for redistribution">
+  </div>
+</section>
+
+<section id="how">
+  <h2 class="section-title">How ShareBite Works</h2>
+  <p class="section-subtitle">
+    ShareBite provides a simple process that allows surplus food to be listed,
+    stored securely in the cloud and made visible to people who can collect it.
+  </p>
+
+  <div class="steps">
+    <div class="card">
+      <div class="step-number">1</div>
+      <h3>Donor Lists Food</h3>
+      <p>The donor enters the food name, quantity, collection location, expiry time and contact information.</p>
+    </div>
+
+    <div class="card">
+      <div class="step-number">2</div>
+      <h3>Cloud Processing</h3>
+      <p>API Gateway sends the request to AWS Lambda, which validates the information and stores it in Amazon DynamoDB.</p>
+    </div>
+
+    <div class="card">
+      <div class="step-number">3</div>
+      <h3>Recipient Finds Food</h3>
+      <p>Available food listings are retrieved live so recipients can view the location, deadline and donor contact details.</p>
+    </div>
   </div>
 </section>
 
 <section id="features">
   <h2 class="section-title">Platform Features</h2>
+  <p class="section-subtitle">
+    The website combines a simple user interface with serverless AWS services
+    to support reliable food listing and retrieval.
+  </p>
 
   <div class="features">
     <div class="card">
       <h3>📦 Food Donation</h3>
-      <p>Donors can upload surplus food details quickly and make them available for collection.</p>
+      <p>Donors can upload surplus food details quickly and make them available for local collection.</p>
     </div>
 
     <div class="card">
-      <h3>⚡ Real-Time Listings</h3>
-      <p>Available food listings are retrieved live using API Gateway, Lambda, and DynamoDB.</p>
+      <h3>⚡ Live Food Listings</h3>
+      <p>Available food listings are retrieved from the backend through Amazon API Gateway, AWS Lambda and DynamoDB.</p>
     </div>
 
     <div class="card">
       <h3>☁ AWS Serverless</h3>
-      <p>The backend uses AWS Lambda, DynamoDB, API Gateway, S3, CloudWatch, and Cognito.</p>
+      <p>The current backend uses AWS Lambda, API Gateway, DynamoDB, SNS, CloudWatch, S3 and CloudFormation.</p>
     </div>
   </div>
 </section>
 
 <section id="donate">
+  <h2 class="section-title">Donate Food and View Listings</h2>
+  <p class="section-subtitle">
+    This section is connected to the current ShareBite AWS endpoint. Food submitted
+    here is sent to the backend and the live listings are refreshed automatically.
+  </p>
+
   <div class="donation-section">
     <div class="form-box">
       <h2>Donate Food</h2>
 
-      <input id="foodName" placeholder="Food Name">
-      <input id="quantity" placeholder="Quantity">
-      <input id="location" placeholder="Location">
-      <input id="expiryTime" placeholder="Expiry Time">
-      <input id="donorName" placeholder="Donor Name">
-      <input id="contactNumber" placeholder="Contact Number">
+      <form id="donationForm" novalidate>
+        <div class="form-group">
+          <label for="foodName">Food Name <span class="required">*</span></label>
+          <input id="foodName" name="foodName" type="text" placeholder="Example: Rice packets" maxlength="80" required>
+        </div>
 
-      <button class="btn" onclick="submitFood()">Submit Donation</button>
+        <div class="form-group">
+          <label for="quantity">Quantity <span class="required">*</span></label>
+          <input id="quantity" name="quantity" type="text" placeholder="Example: 3 packs" maxlength="50" required>
+        </div>
+
+        <div class="form-group">
+          <label for="location">Collection Location <span class="required">*</span></label>
+          <input id="location" name="location" type="text" placeholder="Example: Coventry city centre" maxlength="120" required>
+        </div>
+
+        <div class="form-group">
+          <label for="expiryTime">Collection Deadline <span class="required">*</span></label>
+          <input id="expiryTime" name="expiryTime" type="datetime-local" required>
+        </div>
+
+        <div class="form-group">
+          <label for="donorName">Donor Name <span class="required">*</span></label>
+          <input id="donorName" name="donorName" type="text" placeholder="Individual or organisation name" maxlength="100" required>
+        </div>
+
+        <div class="form-group">
+          <label for="contactNumber">Contact Number <span class="required">*</span></label>
+          <input id="contactNumber" name="contactNumber" type="tel" placeholder="Example: 07123456789" maxlength="20" required>
+        </div>
+
+        <p class="form-note">
+          Only provide information required for arranging food collection.
+          Do not enter unnecessary sensitive personal information.
+        </p>
+
+        <button id="submitButton" class="btn" type="submit">Submit Donation</button>
+        <div id="formMessage" class="message" role="status" aria-live="polite"></div>
+      </form>
     </div>
 
     <div class="listing-box">
       <h2>Available Food Listings</h2>
+
+      <div class="listing-controls">
+        <input id="listingSearch" type="search"
+          placeholder="Search by food name or location"
+          aria-label="Search food listings">
+      </div>
+
+      <div id="listingMessage" class="message" role="status" aria-live="polite"></div>
+
       <div id="foodListings">
         <p>Loading listings...</p>
       </div>
+
       <br>
-      <button class="btn" onclick="loadFoodListings()">Refresh Listings</button>
+      <button id="refreshButton" class="btn" type="button">Refresh Listings</button>
     </div>
   </div>
 </section>
 
 <section id="impact">
   <h2 class="section-title">Community Impact</h2>
+  <p class="section-subtitle">
+    ShareBite supports the goal of reducing avoidable food waste while improving
+    access to surplus food within local communities.
+  </p>
 
   <div class="dashboard">
     <div class="stat">
-      <h2>120+</h2>
-      <p>Meals Shared</p>
+      <h2 id="liveListingCount">0</h2>
+      <p>Current Food Listings</p>
     </div>
 
     <div class="stat">
-      <h2>65+</h2>
-      <p>Families Supported</p>
+      <h2>SDG 2</h2>
+      <p>Supporting Zero Hunger</p>
     </div>
 
     <div class="stat">
-      <h2>340kg</h2>
-      <p>Food Waste Reduced</p>
+      <h2>AWS</h2>
+      <p>Serverless Cloud Platform</p>
     </div>
+  </div>
+</section>
+
+<section id="about">
+  <h2 class="section-title">About ShareBite</h2>
+
+  <div class="about-box">
+    <p>
+      ShareBite is a university cloud computing project created to demonstrate how
+      serverless technology can support a practical food redistribution service.
+      The platform allows donors to publish surplus food and enables recipients to
+      view available listings.
+    </p>
+
+    <p>
+      The current implementation uses Amazon API Gateway for the web API,
+      AWS Lambda for backend processing, Amazon DynamoDB for food listing storage,
+      Amazon SNS for notifications, Amazon CloudWatch for monitoring, Amazon S3
+      for web hosting support and AWS CloudFormation for infrastructure deployment.
+    </p>
+
+    <p>
+      The project aligns with United Nations Sustainable Development Goal 2:
+      Zero Hunger, while also encouraging responsible food use and reduced waste.
+    </p>
   </div>
 </section>
 
 <footer>
   <p>© 2026 ShareBite | Zero Hunger Cloud Platform</p>
+  <p>Cloud-based food sharing and redistribution project</p>
 </footer>
 
 <script>
-  const API_URL = "https://gtti72vg8c.execute-api.us-east-1.amazonaws.com/prod/food";
+  "use strict";
 
-  async function submitFood() {
+  const API_URL = "https://1yx8w8qwdi.execute-api.us-east-1.amazonaws.com/prod/food";
+
+  let allFoodListings = [];
+
+  const donationForm = document.getElementById("donationForm");
+  const submitButton = document.getElementById("submitButton");
+  const refreshButton = document.getElementById("refreshButton");
+  const foodListingsContainer = document.getElementById("foodListings");
+  const formMessage = document.getElementById("formMessage");
+  const listingMessage = document.getElementById("listingMessage");
+  const listingSearch = document.getElementById("listingSearch");
+  const liveListingCount = document.getElementById("liveListingCount");
+
+  function showMessage(element, text, type) {
+    element.textContent = text;
+    element.className = "message show " + type;
+  }
+
+  function hideMessage(element) {
+    element.textContent = "";
+    element.className = "message";
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function formatDateTime(value) {
+    if (!value) return "Not specified";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+
+    return date.toLocaleString();
+  }
+
+  function validatePhoneNumber(value) {
+    return /^[0-9+()\s-]{7,20}$/.test(value);
+  }
+
+  function setMinimumExpiryTime() {
+    const expiryInput = document.getElementById("expiryTime");
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    expiryInput.min = now.toISOString().slice(0, 16);
+  }
+
+  function renderFoodListings(items) {
+    liveListingCount.textContent = items.length;
+
+    if (items.length === 0) {
+      foodListingsContainer.innerHTML = "<p>No food listings available.</p>";
+      return;
+    }
+
+    foodListingsContainer.innerHTML = items.map(item => `
+      <article class="listing-item">
+        <h4>${escapeHtml(item.foodName || "Unnamed Food")}</h4>
+        <p><strong>Quantity:</strong> ${escapeHtml(item.quantity || "N/A")}</p>
+        <p><strong>Location:</strong> ${escapeHtml(item.location || "N/A")}</p>
+        <p><strong>Collection deadline:</strong> ${escapeHtml(formatDateTime(item.expiryTime))}</p>
+        <p><strong>Donor:</strong> ${escapeHtml(item.donorName || "N/A")}</p>
+        <p><strong>Contact:</strong> ${escapeHtml(item.contactNumber || "N/A")}</p>
+        <span class="status">${escapeHtml(item.status || "Available")}</span>
+      </article>
+    `).join("");
+  }
+
+  async function submitFood(event) {
+    event.preventDefault();
+    hideMessage(formMessage);
+
     const data = {
       foodName: document.getElementById("foodName").value.trim(),
       quantity: document.getElementById("quantity").value.trim(),
@@ -198,98 +633,186 @@
       contactNumber: document.getElementById("contactNumber").value.trim()
     };
 
-    if (!data.foodName || !data.quantity || !data.location) {
-      alert("Please enter food name, quantity, and location.");
+    if (
+      !data.foodName ||
+      !data.quantity ||
+      !data.location ||
+      !data.expiryTime ||
+      !data.donorName ||
+      !data.contactNumber
+    ) {
+      showMessage(formMessage, "Please complete all required fields.", "error");
       return;
     }
+
+    if (!validatePhoneNumber(data.contactNumber)) {
+      showMessage(formMessage, "Please enter a valid contact number.", "error");
+      return;
+    }
+
+    const selectedExpiry = new Date(data.expiryTime);
+
+    if (Number.isNaN(selectedExpiry.getTime()) || selectedExpiry <= new Date()) {
+      showMessage(formMessage, "Please choose a future collection deadline.", "error");
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting...";
+    showMessage(formMessage, "Sending the food listing to ShareBite...", "info");
 
     try {
       const response = await fetch(API_URL, {
         method: "POST",
         mode: "cors",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify(data)
+      });
+
+      const resultText = await response.text();
+      let result = {};
+
+      if (resultText) {
+        try {
+          result = JSON.parse(resultText);
+        } catch {
+          result = { message: resultText };
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+          result.error ||
+          "The backend returned status " + response.status
+        );
+      }
+
+      showMessage(
+        formMessage,
+        result.message || "Food listing added successfully.",
+        "success"
+      );
+
+      donationForm.reset();
+      setMinimumExpiryTime();
+      await loadFoodListings();
+
+    } catch (error) {
+      console.error("POST error:", error);
+      showMessage(
+        formMessage,
+        "Unable to submit the food listing. " + error.message,
+        "error"
+      );
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Submit Donation";
+    }
+  }
+
+  async function loadFoodListings() {
+    foodListingsContainer.innerHTML = "<p>Loading listings...</p>";
+    showMessage(listingMessage, "Connecting to the ShareBite backend...", "info");
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "GET",
+        mode: "cors",
+        headers: {
+          "Accept": "application/json"
+        },
+        cache: "no-store"
       });
 
       const resultText = await response.text();
       let result;
 
       try {
-        result = JSON.parse(resultText);
+        result = resultText ? JSON.parse(resultText) : [];
       } catch {
-        result = { message: resultText };
+        throw new Error("The API returned an invalid response.");
       }
 
       if (!response.ok) {
-        alert("Backend error: " + (result.message || result.error || response.status));
-        console.log(result);
-        return;
+        throw new Error(
+          result.message ||
+          result.error ||
+          "The backend returned status " + response.status
+        );
       }
 
-      alert(result.message || "Food listing added successfully.");
+      allFoodListings = Array.isArray(result)
+        ? result
+        : Array.isArray(result.items)
+          ? result.items
+          : [];
 
-      document.getElementById("foodName").value = "";
-      document.getElementById("quantity").value = "";
-      document.getElementById("location").value = "";
-      document.getElementById("expiryTime").value = "";
-      document.getElementById("donorName").value = "";
-      document.getElementById("contactNumber").value = "";
+      renderFoodListings(allFoodListings);
 
-      loadFoodListings();
+      if (allFoodListings.length === 0) {
+        showMessage(
+          listingMessage,
+          "The backend is connected successfully, but there are currently no food listings.",
+          "info"
+        );
+      } else {
+        showMessage(
+          listingMessage,
+          allFoodListings.length + " food listing(s) loaded successfully.",
+          "success"
+        );
+      }
 
     } catch (error) {
-      alert("Error connecting to backend API: " + error.message);
-      console.log("POST error:", error);
+      console.error("GET error:", error);
+
+      liveListingCount.textContent = "0";
+      foodListingsContainer.innerHTML =
+        "<p>Failed to load listings. Please check the API connection.</p>";
+
+      showMessage(
+        listingMessage,
+        "Unable to load food listings. " + error.message,
+        "error"
+      );
     }
   }
 
-  async function loadFoodListings() {
-    const container = document.getElementById("foodListings");
-    container.innerHTML = "<p>Loading listings...</p>";
+  function filterFoodListings() {
+    const searchTerm = listingSearch.value.trim().toLowerCase();
 
-    try {
-      const response = await fetch(API_URL, {
-        method: "GET",
-        mode: "cors"
-      });
-
-      const result = await response.json();
-      const items = Array.isArray(result) ? result : (result.items || []);
-
-      if (!response.ok) {
-        container.innerHTML = "<p>Backend returned an error.</p>";
-        console.log(result);
-        return;
-      }
-
-      if (items.length === 0) {
-        container.innerHTML = "<p>No food listings available.</p>";
-        return;
-      }
-
-      container.innerHTML = items.map(item => `
-        <div class="listing-item">
-          <h4>${item.foodName || "Unnamed Food"}</h4>
-          <p><strong>Quantity:</strong> ${item.quantity || "N/A"}</p>
-          <p><strong>Location:</strong> ${item.location || "N/A"}</p>
-          <p><strong>Expiry:</strong> ${item.expiryTime || "N/A"}</p>
-          <p><strong>Donor:</strong> ${item.donorName || "N/A"}</p>
-          <p><strong>Contact:</strong> ${item.contactNumber || "N/A"}</p>
-          <p><strong>Status:</strong> ${item.status || "Available"}</p>
-        </div>
-      `).join("");
-
-    } catch (error) {
-      container.innerHTML = "<p>Failed to load listings. Check API connection.</p>";
-      console.log("GET error:", error);
+    if (!searchTerm) {
+      renderFoodListings(allFoodListings);
+      return;
     }
+
+    const filteredItems = allFoodListings.filter(item => {
+      const foodName = String(item.foodName || "").toLowerCase();
+      const location = String(item.location || "").toLowerCase();
+      const donorName = String(item.donorName || "").toLowerCase();
+
+      return (
+        foodName.includes(searchTerm) ||
+        location.includes(searchTerm) ||
+        donorName.includes(searchTerm)
+      );
+    });
+
+    renderFoodListings(filteredItems);
   }
 
-  window.onload = function () {
+  donationForm.addEventListener("submit", submitFood);
+  refreshButton.addEventListener("click", loadFoodListings);
+  listingSearch.addEventListener("input", filterFoodListings);
+
+  window.addEventListener("DOMContentLoaded", function () {
+    setMinimumExpiryTime();
     loadFoodListings();
-  };
+  });
 </script>
 
 </body>
