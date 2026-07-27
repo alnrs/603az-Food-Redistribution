@@ -1,1 +1,152 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Register | ShareBite</title><link rel="stylesheet" href="css/style.css"></head><body><div class="auth"><section class="auth-art"><a class="brand" style="color:white" href="index.html">🌿 ShareBite</a><div><h1>Create account</h1><p>No phone number or home address is required.</p></div><small>A verification code will be sent by email.</small></section><main class="auth-panel"><section class="auth-card"><h1>Register</h1><div id="msg" class="message"></div><form id="f"><div class="form-group"><label>Display name</label><input id="name" required></div><div class="form-group"><label>Email</label><input id="email" type="email" required></div><div class="form-group"><label>Password</label><input id="password" type="password" minlength="12" required></div><label><input id="consent" type="checkbox" style="width:auto" required> I have read the <a href="privacy.html">privacy notice</a>.</label><br><button id="b" class="btn primary" style="width:100%">Create account</button></form></section></main></div><script src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"></script><script src="js/config.js"></script><script src="js/common.js"></script><script src="js/auth.js"></script><script>document.getElementById('f').onsubmit=async e=>{e.preventDefault();const m=document.getElementById('msg');try{await register(name.value.trim(),email.value.trim(),password.value);sessionStorage.setItem('pendingEmail',email.value.trim());location.replace('confirm-account.html')}catch(x){showMessage(m,x.message,'error')}}</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Register | ShareBite</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+</head>
+
+<body>
+    <div class="auth">
+
+        <section class="auth-art">
+            <a
+                class="brand"
+                style="color: white;"
+                href="index.html"
+            >
+                🌿 ShareBite
+            </a>
+
+            <div>
+                <h1>Create account</h1>
+
+                <p>
+                    No phone number or home address is required.
+                </p>
+            </div>
+
+            <small>
+                A verification code will be sent by email.
+            </small>
+        </section>
+
+        <main class="auth-panel">
+
+            <section class="auth-card">
+
+                <h1>Register</h1>
+
+                <div
+                    id="authMessage"
+                    class="message"
+                    role="alert"
+                    aria-live="polite"
+                ></div>
+
+                <form id="registerForm">
+
+                    <div class="form-group">
+                        <label for="displayName">
+                            Display name
+                        </label>
+
+                        <input
+                            id="displayName"
+                            name="displayName"
+                            type="text"
+                            autocomplete="name"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">
+                            Email
+                        </label>
+
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            autocomplete="email"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">
+                            Password
+                        </label>
+
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            minlength="12"
+                            autocomplete="new-password"
+                            required
+                        >
+                    </div>
+
+                    <label for="privacyConsent">
+
+                        <input
+                            id="privacyConsent"
+                            name="privacyConsent"
+                            type="checkbox"
+                            style="width: auto;"
+                            required
+                        >
+
+                        I have read the
+                        <a href="privacy.html">
+                            privacy notice
+                        </a>.
+                    </label>
+
+                    <br>
+
+                    <button
+                        id="registerButton"
+                        class="btn primary"
+                        type="submit"
+                        style="width: 100%;"
+                    >
+                        Create account
+                    </button>
+
+                </form>
+
+                <p style="margin-top: 20px; text-align: center;">
+                    Already have an account?
+                    <a href="login.html">
+                        Sign in
+                    </a>
+                </p>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script
+        src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"
+    ></script>
+
+    <script src="js/config.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
