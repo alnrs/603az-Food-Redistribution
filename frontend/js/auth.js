@@ -496,17 +496,20 @@
             });
 
         const cognitoUser =
-            new AmazonCognitoIdentity.CognitoUser({
-                Username: email,
-                Pool: userPool
-            });
+    new AmazonCognitoIdentity.CognitoUser({
+        Username: email,
+        Pool: userPool
+    });
 
-        setButtonLoading(
-            submitButton,
-            true,
-            "Signing in..."
-        );
+cognitoUser.setAuthenticationFlowType(
+    "USER_PASSWORD_AUTH"
+);
 
+setButtonLoading(
+    submitButton,
+    true,
+    "Signing in..."
+);
         cognitoUser.authenticateUser(
             authenticationDetails,
             {
