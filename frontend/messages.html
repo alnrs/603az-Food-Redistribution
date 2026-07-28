@@ -1,1 +1,549 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Private messages | ShareBite</title><link rel="stylesheet" href="css/style.css"></head><body><div class="app"><aside class="side"><a class="brand" style="color:white;margin-bottom:20px" href="dashboard.html">🌿 ShareBite</a><a href="dashboard.html">Dashboard</a><a href="browse.html">Browse food</a><a href="add-food.html">Add food</a><a href="my-listings.html">My listings</a><a href="messages.html">Messages</a><a href="profile.html">Profile</a><a href="privacy.html">Privacy</a><a href="#" onclick="signOut();return false">Sign out</a></aside><main class="main"><header class="top"><div><strong data-name>User</strong><div class="meta" data-email></div></div><button class="btn outline" onclick="signOut()">Sign out</button></header><div class="content"><h1>Private messages</h1><div class="card"><p>This replaces public phone numbers. Conversations and messages require protected DynamoDB tables and API routes.</p></div></div></main></div><script src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"></script><script src="js/config.js"></script><script src="js/common.js"></script><script src="js/auth.js"></script><script>document.addEventListener("DOMContentLoaded",requireAuth)</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Private messages | ShareBite</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+<div class="app">
+
+    <aside class="side">
+        <a
+            class="brand"
+            style="color:white; margin-bottom:20px;"
+            href="dashboard.html"
+        >
+            🌿 ShareBite
+        </a>
+
+        <a href="dashboard.html">Dashboard</a>
+        <a href="browse.html">Browse food</a>
+        <a href="add-food.html">Add food</a>
+        <a href="my-listings.html">My listings</a>
+        <a href="messages.html">Messages</a>
+        <a href="profile.html">Profile</a>
+        <a href="privacy.html">Privacy</a>
+
+        <a
+            href="#"
+            onclick="logoutUser(event); return false;"
+        >
+            Sign out
+        </a>
+    </aside>
+
+    <main class="main">
+
+        <header class="top">
+            <div>
+                <strong data-name>User</strong>
+                <div class="meta" data-email></div>
+            </div>
+
+            <button
+                class="btn outline"
+                type="button"
+                onclick="logoutUser(event);"
+            >
+                Sign out
+            </button>
+        </header>
+
+        <div class="content">
+
+            <h1>Private messages</h1>
+
+            <p class="meta">
+                Contact donors without displaying personal phone numbers.
+            </p>
+
+            <div
+                id="messageStatus"
+                class="message"
+                role="alert"
+                aria-live="polite"
+            ></div>
+
+            <div class="grid g2">
+
+                <section class="card">
+
+                    <h3>Send a message</h3>
+
+                    <form id="messageForm">
+
+                        <div class="form-group">
+                            <label for="listingSelect">
+                                Food listing
+                            </label>
+
+                            <select
+                                id="listingSelect"
+                                required
+                            >
+                                <option value="">
+                                    Select a food listing
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="messageText">
+                                Message
+                            </label>
+
+                            <textarea
+                                id="messageText"
+                                maxlength="500"
+                                placeholder="Hello, is this food still available?"
+                                required
+                            ></textarea>
+                        </div>
+
+                        <button
+                            id="sendMessageButton"
+                            class="btn primary"
+                            type="submit"
+                        >
+                            Send message
+                        </button>
+
+                    </form>
+
+                </section>
+
+                <section class="card">
+
+                    <h3>Conversation history</h3>
+
+                    <div id="messageList">
+                        <p class="meta">
+                            No messages yet.
+                        </p>
+                    </div>
+
+                </section>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+
+<script>
+"use strict";
+
+let currentClaims = null;
+let availableListings = [];
+
+
+function decodeJwtPayload(token) {
+    const parts = token.split(".");
+
+    if (parts.length !== 3) {
+        throw new Error(
+            "The authentication token is invalid."
+        );
+    }
+
+    let payload = parts[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+    while (payload.length % 4 !== 0) {
+        payload += "=";
+    }
+
+    return JSON.parse(
+        decodeURIComponent(
+            window
+                .atob(payload)
+                .split("")
+                .map(function (character) {
+                    return (
+                        "%" +
+                        (
+                            "00" +
+                            character
+                                .charCodeAt(0)
+                                .toString(16)
+                        ).slice(-2)
+                    );
+                })
+                .join("")
+        )
+    );
+}
+
+
+function safeText(value) {
+    const element =
+        document.createElement("div");
+
+    element.textContent =
+        value === null ||
+        value === undefined
+            ? ""
+            : String(value);
+
+    return element.innerHTML;
+}
+
+
+function loadMessages() {
+    try {
+        return JSON.parse(
+            localStorage.getItem(
+                "sharebiteMessages"
+            ) || "[]"
+        );
+    } catch (error) {
+        return [];
+    }
+}
+
+
+function saveMessages(messages) {
+    localStorage.setItem(
+        "sharebiteMessages",
+        JSON.stringify(messages)
+    );
+}
+
+
+function renderMessages() {
+    const messageList =
+        document.getElementById(
+            "messageList"
+        );
+
+    const messages =
+        loadMessages()
+            .filter(
+                function (message) {
+                    return (
+                        message.senderUserId ===
+                            currentClaims.sub ||
+                        message.recipientUserId ===
+                            currentClaims.sub
+                    );
+                }
+            )
+            .sort(
+                function (a, b) {
+                    return (
+                        new Date(b.createdAt) -
+                        new Date(a.createdAt)
+                    );
+                }
+            );
+
+    if (messages.length === 0) {
+        messageList.innerHTML = `
+            <p class="meta">
+                No messages yet.
+            </p>
+        `;
+
+        return;
+    }
+
+    messageList.innerHTML =
+        messages.map(
+            function (message) {
+                const sentByCurrentUser =
+                    message.senderUserId ===
+                    currentClaims.sub;
+
+                return `
+                    <article
+                        class="card"
+                        style="margin-bottom:12px;"
+                    >
+                        <strong>
+                            ${safeText(
+                                message.foodName
+                            )}
+                        </strong>
+
+                        <p class="meta">
+                            ${
+                                sentByCurrentUser
+                                    ? "Sent to"
+                                    : "Received from"
+                            }
+                            ${safeText(
+                                sentByCurrentUser
+                                    ? message.recipientName
+                                    : message.senderName
+                            )}
+                        </p>
+
+                        <p>
+                            ${safeText(
+                                message.message
+                            )}
+                        </p>
+
+                        <small class="meta">
+                            ${safeText(
+                                new Date(
+                                    message.createdAt
+                                ).toLocaleString()
+                            )}
+                        </small>
+                    </article>
+                `;
+            }
+        ).join("");
+}
+
+
+async function initialiseMessagesPage() {
+    const messageStatus =
+        document.getElementById(
+            "messageStatus"
+        );
+
+    try {
+        const token =
+            await window.ShareBiteAuth
+                .getIdToken();
+
+        currentClaims =
+            decodeJwtPayload(token);
+
+        document
+            .querySelectorAll("[data-name]")
+            .forEach(function (element) {
+                element.textContent =
+                    currentClaims.name ||
+                    currentClaims.email ||
+                    "ShareBite user";
+            });
+
+        document
+            .querySelectorAll("[data-email]")
+            .forEach(function (element) {
+                element.textContent =
+                    currentClaims.email || "";
+            });
+
+        const result =
+            await apiRequest({
+                method: "GET"
+            });
+
+        availableListings =
+            Array.isArray(result)
+                ? result
+                : Array.isArray(result.items)
+                    ? result.items
+                    : [];
+
+        const listingSelect =
+            document.getElementById(
+                "listingSelect"
+            );
+
+        const contactableListings =
+            availableListings.filter(
+                function (listing) {
+                    return (
+                        listing.ownerUserId !==
+                        currentClaims.sub
+                    );
+                }
+            );
+
+        contactableListings.forEach(
+            function (listing) {
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    listing.listingId;
+
+                option.textContent =
+                    (
+                        listing.foodName ||
+                        "Unnamed food"
+                    ) +
+                    " — " +
+                    (
+                        listing.location ||
+                        "Unknown area"
+                    );
+
+                listingSelect.appendChild(
+                    option
+                );
+            }
+        );
+
+        const query =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        const requestedListingId =
+            query.get("listingId");
+
+        if (requestedListingId) {
+            listingSelect.value =
+                requestedListingId;
+        }
+
+        renderMessages();
+        hideMessage(messageStatus);
+
+    } catch (error) {
+        console.error(
+            "Messages loading error:",
+            error
+        );
+
+        showMessage(
+            messageStatus,
+            error.message ||
+                "Messages could not be loaded.",
+            "error"
+        );
+    }
+}
+
+
+document
+    .getElementById("messageForm")
+    .addEventListener(
+        "submit",
+        function (event) {
+            event.preventDefault();
+
+            const listingId =
+                document
+                    .getElementById(
+                        "listingSelect"
+                    )
+                    .value;
+
+            const messageText =
+                document
+                    .getElementById(
+                        "messageText"
+                    )
+                    .value
+                    .trim();
+
+            const messageStatus =
+                document.getElementById(
+                    "messageStatus"
+                );
+
+            const listing =
+                availableListings.find(
+                    function (item) {
+                        return (
+                            item.listingId ===
+                            listingId
+                        );
+                    }
+                );
+
+            if (!listing) {
+                showMessage(
+                    messageStatus,
+                    "Please select a food listing.",
+                    "error"
+                );
+
+                return;
+            }
+
+            if (!messageText) {
+                showMessage(
+                    messageStatus,
+                    "Please enter a message.",
+                    "error"
+                );
+
+                return;
+            }
+
+            const messages =
+                loadMessages();
+
+            messages.push({
+                messageId:
+                    crypto.randomUUID
+                        ? crypto.randomUUID()
+                        : String(Date.now()),
+
+                listingId:
+                    listing.listingId,
+
+                foodName:
+                    listing.foodName ||
+                    "Food listing",
+
+                senderUserId:
+                    currentClaims.sub,
+
+                senderName:
+                    currentClaims.name ||
+                    currentClaims.email ||
+                    "ShareBite user",
+
+                recipientUserId:
+                    listing.ownerUserId,
+
+                recipientName:
+                    listing.donorName ||
+                    "Food donor",
+
+                message:
+                    messageText,
+
+                createdAt:
+                    new Date().toISOString()
+            });
+
+            saveMessages(messages);
+
+            document.getElementById(
+                "messageText"
+            ).value = "";
+
+            showMessage(
+                messageStatus,
+                "Message sent successfully.",
+                "success"
+            );
+
+            renderMessages();
+        }
+    );
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initialiseMessagesPage
+);
+</script>
+</body>
+</html>

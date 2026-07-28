@@ -1,1 +1,351 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard | ShareBite</title><link rel="stylesheet" href="css/style.css"></head><body><div class="app"><aside class="side"><a class="brand" style="color:white;margin-bottom:20px" href="dashboard.html">🌿 ShareBite</a><a href="dashboard.html">Dashboard</a><a href="browse.html">Browse food</a><a href="add-food.html">Add food</a><a href="my-listings.html">My listings</a><a href="messages.html">Messages</a><a href="profile.html">Profile</a><a href="privacy.html">Privacy</a><a href="#" onclick="signOut();return false">Sign out</a></aside><main class="main"><header class="top"><div><strong data-name>User</strong><div class="meta" data-email></div></div><button class="btn outline" onclick="signOut()">Sign out</button></header><div class="content"><h1>Dashboard</h1><p class="meta">Welcome, <span data-name></span>.</p><section class="stats"><article class="stat"><span>All listings</span><strong id="all">0</strong></article><article class="stat"><span>Available</span><strong id="avail">0</strong></article><article class="stat"><span>Requests</span><strong>0</strong></article><article class="stat"><span>Messages</span><strong>0</strong></article></section><div class="grid g3"><article class="card"><h3>Add food</h3><p>Create a detailed listing.</p><a class="btn primary" href="add-food.html">Add food</a></article><article class="card"><h3>Browse</h3><p>Find available food.</p><a class="btn secondary" href="browse.html">Browse</a></article><article class="card"><h3>Messages</h3><p>Private contact without phone numbers.</p><a class="btn outline" href="messages.html">Messages</a></article></div></div></main></div><script src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"></script><script src="js/config.js"></script><script src="js/common.js"></script><script src="js/auth.js"></script><script src="js/api.js"></script><script>document.addEventListener('DOMContentLoaded',async()=>{if(!await requireAuth())return;try{const r=await apiRequest(),a=Array.isArray(r)?r:r.items||[];all.textContent=a.length;avail.textContent=a.filter(x=>(x.status||'Available')==='Available').length}catch{all.textContent=avail.textContent='—'}})</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Dashboard | ShareBite</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+<div class="app">
+
+    <aside class="side">
+        <a
+            class="brand"
+            style="color:white; margin-bottom:20px;"
+            href="dashboard.html"
+        >
+            🌿 ShareBite
+        </a>
+
+        <a href="dashboard.html">Dashboard</a>
+        <a href="browse.html">Browse food</a>
+        <a href="add-food.html">Add food</a>
+        <a href="my-listings.html">My listings</a>
+        <a href="messages.html">Messages</a>
+        <a href="profile.html">Profile</a>
+        <a href="privacy.html">Privacy</a>
+
+        <a
+            href="#"
+            onclick="logoutUser(event); return false;"
+        >
+            Sign out
+        </a>
+    </aside>
+
+    <main class="main">
+
+        <header class="top">
+            <div>
+                <strong data-name>User</strong>
+                <div class="meta" data-email></div>
+            </div>
+
+            <button
+                class="btn outline"
+                type="button"
+                onclick="logoutUser(event);"
+            >
+                Sign out
+            </button>
+        </header>
+
+        <div class="content">
+
+            <h1>Dashboard</h1>
+
+            <p class="meta">
+                Welcome, <span data-name>User</span>.
+            </p>
+
+            <div
+                id="dashboardMessage"
+                class="message"
+                role="alert"
+                aria-live="polite"
+            ></div>
+
+            <section class="stats">
+
+                <article class="stat">
+                    <span>All listings</span>
+                    <strong id="allListingsCount">0</strong>
+                </article>
+
+                <article class="stat">
+                    <span>Available</span>
+                    <strong id="availableListingsCount">0</strong>
+                </article>
+
+                <article class="stat">
+                    <span>My listings</span>
+                    <strong id="myListingsCount">0</strong>
+                </article>
+
+                <article class="stat">
+                    <span>Messages</span>
+                    <strong id="messagesCount">0</strong>
+                </article>
+
+            </section>
+
+            <div class="grid g3">
+
+                <article class="card">
+                    <h3>Add food</h3>
+
+                    <p>
+                        Create a new surplus food listing.
+                    </p>
+
+                    <a
+                        class="btn primary"
+                        href="add-food.html"
+                    >
+                        Add food
+                    </a>
+                </article>
+
+                <article class="card">
+                    <h3>Browse</h3>
+
+                    <p>
+                        Find food currently available for collection.
+                    </p>
+
+                    <a
+                        class="btn secondary"
+                        href="browse.html"
+                    >
+                        Browse
+                    </a>
+                </article>
+
+                <article class="card">
+                    <h3>Messages</h3>
+
+                    <p>
+                        Contact food donors without displaying phone numbers.
+                    </p>
+
+                    <a
+                        class="btn outline"
+                        href="messages.html"
+                    >
+                        Messages
+                    </a>
+                </article>
+
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+
+<script>
+"use strict";
+
+function decodeJwtPayload(token) {
+    const parts = token.split(".");
+
+    if (parts.length !== 3) {
+        throw new Error("The authentication token is invalid.");
+    }
+
+    let payload = parts[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+    while (payload.length % 4 !== 0) {
+        payload += "=";
+    }
+
+    return JSON.parse(
+        decodeURIComponent(
+            window
+                .atob(payload)
+                .split("")
+                .map(function (character) {
+                    return (
+                        "%" +
+                        (
+                            "00" +
+                            character
+                                .charCodeAt(0)
+                                .toString(16)
+                        ).slice(-2)
+                    );
+                })
+                .join("")
+        )
+    );
+}
+
+
+function getStoredMessageCount(userId) {
+    try {
+        const messages =
+            JSON.parse(
+                localStorage.getItem(
+                    "sharebiteMessages"
+                ) || "[]"
+            );
+
+        return messages.filter(
+            function (message) {
+                return (
+                    message.senderUserId === userId ||
+                    message.recipientUserId === userId
+                );
+            }
+        ).length;
+
+    } catch (error) {
+        return 0;
+    }
+}
+
+
+async function initialiseDashboard() {
+    const dashboardMessage =
+        document.getElementById(
+            "dashboardMessage"
+        );
+
+    try {
+        if (
+            !window.ShareBiteAuth ||
+            typeof window.ShareBiteAuth
+                .getIdToken !== "function"
+        ) {
+            throw new Error(
+                "Authentication services could not be loaded."
+            );
+        }
+
+        const token =
+            await window.ShareBiteAuth
+                .getIdToken();
+
+        const claims =
+            decodeJwtPayload(token);
+
+        document
+            .querySelectorAll("[data-name]")
+            .forEach(function (element) {
+                element.textContent =
+                    claims.name ||
+                    claims.email ||
+                    "ShareBite user";
+            });
+
+        document
+            .querySelectorAll("[data-email]")
+            .forEach(function (element) {
+                element.textContent =
+                    claims.email || "";
+            });
+
+        const result =
+            await apiRequest({
+                method: "GET"
+            });
+
+        const listings =
+            Array.isArray(result)
+                ? result
+                : Array.isArray(result.items)
+                    ? result.items
+                    : [];
+
+        const availableListings =
+            listings.filter(
+                function (listing) {
+                    return (
+                        listing.status ||
+                        "Available"
+                    ) === "Available";
+                }
+            );
+
+        const myListings =
+            listings.filter(
+                function (listing) {
+                    return (
+                        listing.ownerUserId ===
+                        claims.sub
+                    );
+                }
+            );
+
+        document.getElementById(
+            "allListingsCount"
+        ).textContent =
+            listings.length;
+
+        document.getElementById(
+            "availableListingsCount"
+        ).textContent =
+            availableListings.length;
+
+        document.getElementById(
+            "myListingsCount"
+        ).textContent =
+            myListings.length;
+
+        document.getElementById(
+            "messagesCount"
+        ).textContent =
+            getStoredMessageCount(
+                claims.sub
+            );
+
+        hideMessage(dashboardMessage);
+
+    } catch (error) {
+        console.error(
+            "Dashboard loading error:",
+            error
+        );
+
+        document.getElementById(
+            "allListingsCount"
+        ).textContent = "—";
+
+        document.getElementById(
+            "availableListingsCount"
+        ).textContent = "—";
+
+        document.getElementById(
+            "myListingsCount"
+        ).textContent = "—";
+
+        showMessage(
+            dashboardMessage,
+            error.message ||
+                "Dashboard information could not be loaded.",
+            "error"
+        );
+    }
+}
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initialiseDashboard
+);
+</script>
+</body>
+</html>

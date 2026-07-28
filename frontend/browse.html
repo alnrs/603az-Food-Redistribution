@@ -283,11 +283,13 @@ function renderListings(listings) {
                         </p>
 
                         <a
-                            class="btn outline"
-                            href="messages.html"
-                        >
-                            Message donor
-                        </a>
+    class="btn outline"
+    href="messages.html?listingId=${encodeURIComponent(
+        item.listingId || ""
+    )}"
+>
+    Message donor
+</a>
 
                     </div>
                 </article>
