@@ -1,1 +1,488 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Add food | ShareBite</title><link rel="stylesheet" href="css/style.css"></head><body><div class="app"><aside class="side"><a class="brand" style="color:white;margin-bottom:20px" href="dashboard.html">🌿 ShareBite</a><a href="dashboard.html">Dashboard</a><a href="browse.html">Browse food</a><a href="add-food.html">Add food</a><a href="my-listings.html">My listings</a><a href="messages.html">Messages</a><a href="profile.html">Profile</a><a href="privacy.html">Privacy</a><a href="#" onclick="signOut();return false">Sign out</a></aside><main class="main"><header class="top"><div><strong data-name>User</strong><div class="meta" data-email></div></div><button class="btn outline" onclick="signOut()">Sign out</button></header><div class="content"><h1>Add a food listing</h1><p class="meta">No public phone number is collected.</p><div class="grid g2"><section class="card"><form id="f"><div class="form-group"><label>Food name</label><input id="foodName" required></div><div class="form-group"><label>Category</label><select id="category" required><option>Fruit and vegetables</option><option>Bakery</option><option>Prepared meals</option><option>Dairy</option><option>Pantry</option><option>Other</option></select></div><div class="form-group"><label>Description</label><textarea id="description" required></textarea></div><div class="form-group"><label>Quantity</label><input id="quantity" required></div><div class="form-group"><label>Collection area</label><input id="location" placeholder="Example: Coventry CV1 area" required></div><div class="form-group"><label>Collection deadline</label><input id="expiryTime" type="datetime-local" required></div><div class="form-group"><label>Allergy information</label><textarea id="allergyInfo" required></textarea></div><div class="form-group"><label>Storage instructions</label><textarea id="storageInstructions"></textarea></div><button id="b" class="btn primary">Publish listing</button><div id="msg" class="message"></div></form></section><aside class="card"><h3>Food photograph</h3><label class="upload" for="photo">Choose JPG, PNG or WebP (max 5 MB)</label><input id="photo" type="file" accept="image/jpeg,image/png,image/webp" hidden><div id="preview" class="preview"><img id="previewImg" alt="Preview"></div><p class="meta">Preview works now. Permanent upload requires the S3 presigned-URL backend endpoint.</p></aside></div></div></main></div><script src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"></script><script src="js/config.js"></script><script src="js/common.js"></script><script src="js/auth.js"></script><script src="js/api.js"></script><script>let claims;document.addEventListener('DOMContentLoaded',async()=>{claims=await requireAuth();const n=new Date();n.setMinutes(n.getMinutes()-n.getTimezoneOffset());expiryTime.min=n.toISOString().slice(0,16)});photo.onchange=()=>{const x=photo.files[0];if(!x)return;if(!['image/jpeg','image/png','image/webp'].includes(x.type)||x.size>5*1024*1024){showMessage(msg,'Use JPG, PNG or WebP up to 5 MB','error');photo.value='';return}previewImg.src=URL.createObjectURL(x);preview.classList.add('show')};f.onsubmit=async e=>{e.preventDefault();b.disabled=true;try{const data={foodName:foodName.value.trim(),category:category.value,description:description.value.trim(),quantity:quantity.value.trim(),location:location.value.trim(),expiryTime:expiryTime.value,allergyInfo:allergyInfo.value.trim(),storageInstructions:storageInstructions.value.trim(),donorName:claims.name||claims.email,ownerUserId:claims.sub,status:'Available'};const r=await apiRequest({method:'POST',body:JSON.stringify(data)});showMessage(msg,r.message||'Listing created','success');f.reset();preview.classList.remove('show')}catch(x){showMessage(msg,x.message,'error')}finally{b.disabled=false}}</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Add food | ShareBite</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="app">
+
+        <aside class="side">
+            <a
+                class="brand"
+                style="color: white; margin-bottom: 20px;"
+                href="dashboard.html"
+            >
+                🌿 ShareBite
+            </a>
+
+            <a href="dashboard.html">Dashboard</a>
+            <a href="browse.html">Browse food</a>
+            <a href="add-food.html">Add food</a>
+            <a href="my-listings.html">My listings</a>
+            <a href="messages.html">Messages</a>
+            <a href="profile.html">Profile</a>
+            <a href="privacy.html">Privacy</a>
+
+            <a
+                href="#"
+                onclick="logoutUser(event);"
+            >
+                Sign out
+            </a>
+        </aside>
+
+        <main class="main">
+
+            <header class="top">
+                <div>
+                    <strong data-name>User</strong>
+                    <div class="meta" data-email></div>
+                </div>
+
+                <button
+                    class="btn outline"
+                    type="button"
+                    onclick="logoutUser(event);"
+                >
+                    Sign out
+                </button>
+            </header>
+
+            <div class="content">
+
+                <h1>Add a food listing</h1>
+
+                <p class="meta">
+                    No public phone number is collected.
+                </p>
+
+                <div class="grid g2">
+
+                    <section class="card">
+
+                        <form id="foodListingForm">
+
+                            <div class="form-group">
+                                <label for="foodName">
+                                    Food name
+                                </label>
+
+                                <input
+                                    id="foodName"
+                                    name="foodName"
+                                    type="text"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="category">
+                                    Category
+                                </label>
+
+                                <select
+                                    id="category"
+                                    name="category"
+                                    required
+                                >
+                                    <option value="Fruit and vegetables">
+                                        Fruit and vegetables
+                                    </option>
+
+                                    <option value="Bakery">
+                                        Bakery
+                                    </option>
+
+                                    <option value="Prepared meals">
+                                        Prepared meals
+                                    </option>
+
+                                    <option value="Dairy">
+                                        Dairy
+                                    </option>
+
+                                    <option value="Pantry">
+                                        Pantry
+                                    </option>
+
+                                    <option value="Other">
+                                        Other
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="description">
+                                    Description
+                                </label>
+
+                                <textarea
+                                    id="description"
+                                    name="description"
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="quantity">
+                                    Quantity
+                                </label>
+
+                                <input
+                                    id="quantity"
+                                    name="quantity"
+                                    type="text"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="collectionArea">
+                                    Collection area
+                                </label>
+
+                                <input
+                                    id="collectionArea"
+                                    name="collectionArea"
+                                    type="text"
+                                    placeholder="Example: Coventry CV1 area"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="expiryTime">
+                                    Collection deadline
+                                </label>
+
+                                <input
+                                    id="expiryTime"
+                                    name="expiryTime"
+                                    type="datetime-local"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="allergyInfo">
+                                    Allergy information
+                                </label>
+
+                                <textarea
+                                    id="allergyInfo"
+                                    name="allergyInfo"
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="storageInstructions">
+                                    Storage instructions
+                                </label>
+
+                                <textarea
+                                    id="storageInstructions"
+                                    name="storageInstructions"
+                                ></textarea>
+                            </div>
+
+                            <button
+                                id="publishButton"
+                                class="btn primary"
+                                type="submit"
+                            >
+                                Publish listing
+                            </button>
+
+                            <div
+                                id="listingMessage"
+                                class="message"
+                                role="alert"
+                                aria-live="polite"
+                            ></div>
+
+                        </form>
+
+                    </section>
+
+                    <aside class="card">
+
+                        <h3>Food photograph</h3>
+
+                        <label
+                            class="upload"
+                            for="photo"
+                        >
+                            Choose JPG, PNG or WebP (max 5 MB)
+                        </label>
+
+                        <input
+                            id="photo"
+                            name="photo"
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            hidden
+                        >
+
+                        <div
+                            id="preview"
+                            class="preview"
+                        >
+                            <img
+                                id="previewImg"
+                                alt="Selected food preview"
+                            >
+                        </div>
+
+                        <p class="meta">
+                            Preview works now. Permanent upload requires
+                            the S3 presigned-URL backend endpoint.
+                        </p>
+
+                    </aside>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+
+    <script>
+        "use strict";
+
+        let userClaims = null;
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            async function () {
+                try {
+                    userClaims = await requireAuth();
+
+                    const expiryInput =
+                        document.getElementById("expiryTime");
+
+                    const now = new Date();
+
+                    now.setMinutes(
+                        now.getMinutes() -
+                        now.getTimezoneOffset()
+                    );
+
+                    expiryInput.min =
+                        now.toISOString().slice(0, 16);
+                } catch (error) {
+                    console.error(
+                        "Authentication check failed:",
+                        error
+                    );
+                }
+            }
+        );
+
+        const photoInput =
+            document.getElementById("photo");
+
+        const preview =
+            document.getElementById("preview");
+
+        const previewImage =
+            document.getElementById("previewImg");
+
+        const messageBox =
+            document.getElementById("listingMessage");
+
+        const listingForm =
+            document.getElementById("foodListingForm");
+
+        const publishButton =
+            document.getElementById("publishButton");
+
+        photoInput.addEventListener(
+            "change",
+            function () {
+                const selectedFile =
+                    photoInput.files[0];
+
+                if (!selectedFile) {
+                    return;
+                }
+
+                const acceptedTypes = [
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp"
+                ];
+
+                const maximumSize =
+                    5 * 1024 * 1024;
+
+                if (
+                    !acceptedTypes.includes(
+                        selectedFile.type
+                    ) ||
+                    selectedFile.size > maximumSize
+                ) {
+                    showMessage(
+                        messageBox,
+                        "Use JPG, PNG or WebP up to 5 MB.",
+                        "error"
+                    );
+
+                    photoInput.value = "";
+                    return;
+                }
+
+                previewImage.src =
+                    URL.createObjectURL(
+                        selectedFile
+                    );
+
+                preview.classList.add("show");
+            }
+        );
+
+        listingForm.addEventListener(
+            "submit",
+            async function (event) {
+                event.preventDefault();
+
+                publishButton.disabled = true;
+                publishButton.textContent =
+                    "Publishing...";
+
+                try {
+                    if (!userClaims) {
+                        throw new Error(
+                            "Your login session could not be found. Please sign in again."
+                        );
+                    }
+
+                    const foodName =
+                        document
+                            .getElementById("foodName")
+                            .value
+                            .trim();
+
+                    const category =
+                        document
+                            .getElementById("category")
+                            .value;
+
+                    const description =
+                        document
+                            .getElementById("description")
+                            .value
+                            .trim();
+
+                    const quantity =
+                        document
+                            .getElementById("quantity")
+                            .value
+                            .trim();
+
+                    const collectionArea =
+                        document
+                            .getElementById("collectionArea")
+                            .value
+                            .trim();
+
+                    const expiryTime =
+                        document
+                            .getElementById("expiryTime")
+                            .value;
+
+                    const allergyInfo =
+                        document
+                            .getElementById("allergyInfo")
+                            .value
+                            .trim();
+
+                    const storageInstructions =
+                        document
+                            .getElementById(
+                                "storageInstructions"
+                            )
+                            .value
+                            .trim();
+
+                    const listingData = {
+                        foodName: foodName,
+                        category: category,
+                        description: description,
+                        quantity: quantity,
+
+                        // Backend still receives the expected
+                        // DynamoDB attribute name "location".
+                        location: collectionArea,
+
+                        expiryTime: expiryTime,
+                        allergyInfo: allergyInfo,
+                        storageInstructions:
+                            storageInstructions,
+
+                        donorName:
+                            userClaims.name ||
+                            userClaims.email ||
+                            "ShareBite user",
+
+                        ownerUserId:
+                            userClaims.sub,
+
+                        status: "Available"
+                    };
+
+                    const response =
+                        await apiRequest({
+                            method: "POST",
+                            body: JSON.stringify(
+                                listingData
+                            )
+                        });
+
+                    showMessage(
+                        messageBox,
+                        response.message ||
+                            "Listing created successfully.",
+                        "success"
+                    );
+
+                    listingForm.reset();
+                    preview.classList.remove("show");
+                    previewImage.removeAttribute("src");
+                } catch (error) {
+                    console.error(
+                        "Listing creation failed:",
+                        error
+                    );
+
+                    showMessage(
+                        messageBox,
+                        error.message ||
+                            "The listing could not be created.",
+                        "error"
+                    );
+                } finally {
+                    publishButton.disabled = false;
+                    publishButton.textContent =
+                        "Publish listing";
+                }
+            }
+        );
+    </script>
+</body>
+</html>
