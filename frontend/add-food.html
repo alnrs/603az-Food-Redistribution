@@ -267,32 +267,83 @@
 
         let userClaims = null;
 
-        document.addEventListener(
-            "DOMContentLoaded",
-            async function () {
-                try {
-                    userClaims = await requireAuth();
+function decodeJwtPayload(token) {
+    const payload = token.split(".")[1];
 
-                    const expiryInput =
-                        document.getElementById("expiryTime");
+    const normalisedPayload = payload
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
 
-                    const now = new Date();
+    const decodedPayload = decodeURIComponent(
+        window
+            .atob(normalisedPayload)
+            .split("")
+            .map(function (character) {
+                return "%" +
+                    (
+                        "00" +
+                        character
+                            .charCodeAt(0)
+                            .toString(16)
+                    ).slice(-2);
+            })
+            .join("")
+    );
 
-                    now.setMinutes(
-                        now.getMinutes() -
-                        now.getTimezoneOffset()
-                    );
+    return JSON.parse(decodedPayload);
+}
 
-                    expiryInput.min =
-                        now.toISOString().slice(0, 16);
-                } catch (error) {
-                    console.error(
-                        "Authentication check failed:",
-                        error
-                    );
-                }
+document.addEventListener(
+    "DOMContentLoaded",
+    async function () {
+        try {
+            const idToken =
+                await window.ShareBiteAuth.getIdToken();
+
+            userClaims =
+                decodeJwtPayload(idToken);
+
+            const nameElement =
+                document.querySelector("[data-name]");
+
+            const emailElement =
+                document.querySelector("[data-email]");
+
+            if (nameElement) {
+                nameElement.textContent =
+                    userClaims.name ||
+                    userClaims.email ||
+                    "ShareBite user";
             }
-        );
+
+            if (emailElement) {
+                emailElement.textContent =
+                    userClaims.email || "";
+            }
+
+            const expiryInput =
+                document.getElementById("expiryTime");
+
+            const now = new Date();
+
+            now.setMinutes(
+                now.getMinutes() -
+                now.getTimezoneOffset()
+            );
+
+            expiryInput.min =
+                now.toISOString().slice(0, 16);
+        } catch (error) {
+            console.error(
+                "Authentication check failed:",
+                error
+            );
+
+            window.location.href =
+                "login.html";
+        }
+    }
+);
 
         const photoInput =
             document.getElementById("photo");
