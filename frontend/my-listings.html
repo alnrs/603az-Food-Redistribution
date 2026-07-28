@@ -1,1 +1,401 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My listings | ShareBite</title><link rel="stylesheet" href="css/style.css"></head><body><div class="app"><aside class="side"><a class="brand" style="color:white;margin-bottom:20px" href="dashboard.html">🌿 ShareBite</a><a href="dashboard.html">Dashboard</a><a href="browse.html">Browse food</a><a href="add-food.html">Add food</a><a href="my-listings.html">My listings</a><a href="messages.html">Messages</a><a href="profile.html">Profile</a><a href="privacy.html">Privacy</a><a href="#" onclick="signOut();return false">Sign out</a></aside><main class="main"><header class="top"><div><strong data-name>User</strong><div class="meta" data-email></div></div><button class="btn outline" onclick="signOut()">Sign out</button></header><div class="content"><h1>My listings</h1><div class="card"><p>This page is ready. Lambda must save the Cognito sub claim and provide an ownership-filtered route.</p></div></div></main></div><script src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"></script><script src="js/config.js"></script><script src="js/common.js"></script><script src="js/auth.js"></script><script>document.addEventListener("DOMContentLoaded",requireAuth)</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>My listings | ShareBite</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+<div class="app">
+
+    <aside class="side">
+        <a
+            class="brand"
+            style="color:white; margin-bottom:20px;"
+            href="dashboard.html"
+        >
+            🌿 ShareBite
+        </a>
+
+        <a href="dashboard.html">Dashboard</a>
+        <a href="browse.html">Browse food</a>
+        <a href="add-food.html">Add food</a>
+        <a href="my-listings.html">My listings</a>
+        <a href="messages.html">Messages</a>
+        <a href="profile.html">Profile</a>
+        <a href="privacy.html">Privacy</a>
+
+        <a
+            href="#"
+            onclick="logoutUser(event); return false;"
+        >
+            Sign out
+        </a>
+    </aside>
+
+    <main class="main">
+
+        <header class="top">
+            <div>
+                <strong data-name>User</strong>
+                <div
+                    class="meta"
+                    data-email
+                ></div>
+            </div>
+
+            <button
+                class="btn outline"
+                type="button"
+                onclick="logoutUser(event);"
+            >
+                Sign out
+            </button>
+        </header>
+
+        <div class="content">
+
+            <h1>My listings</h1>
+
+            <p class="meta">
+                Food listings created using your ShareBite account.
+            </p>
+
+            <div
+                id="msg"
+                class="message"
+                role="alert"
+                aria-live="polite"
+            ></div>
+
+            <section
+                id="myListingsGrid"
+                class="listing-grid"
+            ></section>
+
+        </div>
+    </main>
+</div>
+
+<script src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+
+<script>
+"use strict";
+
+const listingsGrid =
+    document.getElementById(
+        "myListingsGrid"
+    );
+
+const messageElement =
+    document.getElementById("msg");
+
+
+function decodeJwtPayload(token) {
+    const parts = token.split(".");
+
+    if (parts.length !== 3) {
+        throw new Error(
+            "The login token is invalid."
+        );
+    }
+
+    let payload = parts[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+    while (payload.length % 4 !== 0) {
+        payload += "=";
+    }
+
+    return JSON.parse(
+        decodeURIComponent(
+            window
+                .atob(payload)
+                .split("")
+                .map(function (character) {
+                    return (
+                        "%" +
+                        (
+                            "00" +
+                            character
+                                .charCodeAt(0)
+                                .toString(16)
+                        ).slice(-2)
+                    );
+                })
+                .join("")
+        )
+    );
+}
+
+
+function safeText(value) {
+    const element =
+        document.createElement("div");
+
+    element.textContent =
+        value === null ||
+        value === undefined
+            ? ""
+            : String(value);
+
+    return element.innerHTML;
+}
+
+
+function formatDeadline(value) {
+    if (!value) {
+        return "Not specified";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleString();
+}
+
+
+function renderMyListings(listings) {
+    if (!Array.isArray(listings) ||
+        listings.length === 0) {
+
+        listingsGrid.innerHTML = `
+            <div class="card">
+                <h3>No listings yet</h3>
+
+                <p>
+                    You have not published any available
+                    food listings using this account.
+                </p>
+
+                <a
+                    class="btn primary"
+                    href="add-food.html"
+                >
+                    Add food
+                </a>
+            </div>
+        `;
+
+        return;
+    }
+
+    listingsGrid.innerHTML =
+        listings.map(function (item) {
+            const imageSection =
+                item.imageUrl
+                    ? `
+                        <img
+                            src="${safeText(item.imageUrl)}"
+                            alt="${safeText(item.foodName || "Food")}"
+                        >
+                    `
+                    : `
+                        <div class="meta">
+                            No food photograph
+                        </div>
+                    `;
+
+            return `
+                <article class="card listing-card">
+
+                    <div class="listing-image">
+                        ${imageSection}
+                    </div>
+
+                    <div class="listing-body">
+
+                        <h3>
+                            ${safeText(
+                                item.foodName ||
+                                "Unnamed food"
+                            )}
+                        </h3>
+
+                        <p class="meta">
+                            <strong>Status:</strong>
+                            ${safeText(
+                                item.status ||
+                                "Available"
+                            )}
+
+                            <br>
+
+                            <strong>Category:</strong>
+                            ${safeText(
+                                item.category ||
+                                "Not specified"
+                            )}
+
+                            <br>
+
+                            <strong>Quantity:</strong>
+                            ${safeText(
+                                item.quantity ||
+                                "Not specified"
+                            )}
+
+                            <br>
+
+                            <strong>Collection area:</strong>
+                            ${safeText(
+                                item.location ||
+                                "Not specified"
+                            )}
+
+                            <br>
+
+                            <strong>Deadline:</strong>
+                            ${safeText(
+                                formatDeadline(
+                                    item.expiryTime
+                                )
+                            )}
+                        </p>
+
+                        <p>
+                            ${safeText(
+                                item.description ||
+                                "No description provided."
+                            )}
+                        </p>
+
+                    </div>
+                </article>
+            `;
+        }).join("");
+}
+
+
+async function initialiseMyListingsPage() {
+    try {
+        if (
+            !window.ShareBiteAuth ||
+            typeof window.ShareBiteAuth
+                .getIdToken !== "function"
+        ) {
+            throw new Error(
+                "Authentication services could not be loaded."
+            );
+        }
+
+        const token =
+            await window.ShareBiteAuth
+                .getIdToken();
+
+        const claims =
+            decodeJwtPayload(token);
+
+        const currentUserId =
+            claims.sub;
+
+        if (!currentUserId) {
+            throw new Error(
+                "Your authenticated user ID could not be found."
+            );
+        }
+
+        const nameElement =
+            document.querySelector(
+                "[data-name]"
+            );
+
+        const emailElement =
+            document.querySelector(
+                "[data-email]"
+            );
+
+        if (nameElement) {
+            nameElement.textContent =
+                claims.name ||
+                claims.email ||
+                "ShareBite user";
+        }
+
+        if (emailElement) {
+            emailElement.textContent =
+                claims.email || "";
+        }
+
+        /*
+         * The current API Gateway contains GET /food,
+         * so load the available listings and select
+         * those owned by this Cognito user.
+         */
+        const result =
+            await apiRequest({
+                method: "GET"
+            });
+
+        const allListings =
+            Array.isArray(result)
+                ? result
+                : Array.isArray(result.items)
+                    ? result.items
+                    : [];
+
+        const myListings =
+            allListings.filter(
+                function (item) {
+                    return (
+                        item.ownerUserId ===
+                        currentUserId
+                    );
+                }
+            );
+
+        renderMyListings(myListings);
+
+        showMessage(
+            messageElement,
+            myListings.length +
+                " listing(s) found.",
+            "success"
+        );
+
+    } catch (error) {
+        console.error(
+            "My listings error:",
+            error
+        );
+
+        showMessage(
+            messageElement,
+            error.message ||
+                "Your listings could not be loaded.",
+            "error"
+        );
+
+        listingsGrid.innerHTML = `
+            <div class="card">
+                <p>
+                    Your listings could not be loaded.
+                </p>
+            </div>
+        `;
+    }
+}
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initialiseMyListingsPage
+);
+</script>
+</body>
+</html>

@@ -1,1 +1,429 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Browse food | ShareBite</title><link rel="stylesheet" href="css/style.css"></head><body><div class="app"><aside class="side"><a class="brand" style="color:white;margin-bottom:20px" href="dashboard.html">🌿 ShareBite</a><a href="dashboard.html">Dashboard</a><a href="browse.html">Browse food</a><a href="add-food.html">Add food</a><a href="my-listings.html">My listings</a><a href="messages.html">Messages</a><a href="profile.html">Profile</a><a href="privacy.html">Privacy</a><a href="#" onclick="signOut();return false">Sign out</a></aside><main class="main"><header class="top"><div><strong data-name>User</strong><div class="meta" data-email></div></div><button class="btn outline" onclick="signOut()">Sign out</button></header><div class="content"><h1>Browse available food</h1><p class="meta">Only authenticated users can access this page.</p><div class="form-group"><input id="search" placeholder="Search food or area"></div><div id="msg" class="message"></div><section id="grid" class="listing-grid"></section></div></main></div><script src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"></script><script src="js/config.js"></script><script src="js/common.js"></script><script src="js/auth.js"></script><script src="js/api.js"></script><script>let items=[];function render(a){grid.innerHTML=a.length?a.map(x=>`<article class="card listing-card"><div class="listing-image">${x.imageUrl?`<img src="${esc(x.imageUrl)}" alt="${esc(x.foodName)}">`:'Food photograph'}</div><div class="listing-body"><h3>${esc(x.foodName||'Unnamed food')}</h3><p class="meta"><b>Quantity:</b> ${esc(x.quantity||'N/A')}<br><b>Area:</b> ${esc(x.location||'N/A')}<br><b>Deadline:</b> ${esc(fmt(x.expiryTime))}</p><a class="btn outline" href="messages.html">Message donor</a></div></article>`).join(''):'<p>No listings found.</p>'}document.addEventListener('DOMContentLoaded',async()=>{if(!await requireAuth())return;try{const r=await apiRequest();items=Array.isArray(r)?r:r.items||[];render(items);showMessage(msg,items.length+' listing(s) loaded','success')}catch(x){showMessage(msg,x.message,'error')}});search.oninput=()=>{const q=search.value.toLowerCase();render(items.filter(x=>`${x.foodName||''} ${x.location||''}`.toLowerCase().includes(q)))}</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Browse food | ShareBite</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+<div class="app">
+
+    <aside class="side">
+        <a
+            class="brand"
+            style="color:white; margin-bottom:20px;"
+            href="dashboard.html"
+        >
+            🌿 ShareBite
+        </a>
+
+        <a href="dashboard.html">Dashboard</a>
+        <a href="browse.html">Browse food</a>
+        <a href="add-food.html">Add food</a>
+        <a href="my-listings.html">My listings</a>
+        <a href="messages.html">Messages</a>
+        <a href="profile.html">Profile</a>
+        <a href="privacy.html">Privacy</a>
+
+        <a
+            href="#"
+            onclick="logoutUser(event); return false;"
+        >
+            Sign out
+        </a>
+    </aside>
+
+    <main class="main">
+
+        <header class="top">
+            <div>
+                <strong data-name>User</strong>
+                <div
+                    class="meta"
+                    data-email
+                ></div>
+            </div>
+
+            <button
+                class="btn outline"
+                type="button"
+                onclick="logoutUser(event);"
+            >
+                Sign out
+            </button>
+        </header>
+
+        <div class="content">
+
+            <h1>Browse available food</h1>
+
+            <p class="meta">
+                Browse food currently available for collection.
+            </p>
+
+            <div class="form-group">
+                <input
+                    id="search"
+                    type="search"
+                    placeholder="Search by food name, category or area"
+                >
+            </div>
+
+            <div
+                id="msg"
+                class="message"
+                role="alert"
+                aria-live="polite"
+            ></div>
+
+            <section
+                id="grid"
+                class="listing-grid"
+            ></section>
+
+        </div>
+    </main>
+</div>
+
+<script src="https://unpkg.com/amazon-cognito-identity-js@6.3.15/dist/amazon-cognito-identity.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+
+<script>
+"use strict";
+
+let availableItems = [];
+
+const gridElement =
+    document.getElementById("grid");
+
+const messageElement =
+    document.getElementById("msg");
+
+const searchElement =
+    document.getElementById("search");
+
+
+function decodeJwtPayload(token) {
+    const parts = token.split(".");
+
+    if (parts.length !== 3) {
+        throw new Error(
+            "The login token is invalid."
+        );
+    }
+
+    let payload = parts[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+    while (payload.length % 4 !== 0) {
+        payload += "=";
+    }
+
+    return JSON.parse(
+        decodeURIComponent(
+            window
+                .atob(payload)
+                .split("")
+                .map(function (character) {
+                    return (
+                        "%" +
+                        (
+                            "00" +
+                            character
+                                .charCodeAt(0)
+                                .toString(16)
+                        ).slice(-2)
+                    );
+                })
+                .join("")
+        )
+    );
+}
+
+
+function safeText(value) {
+    const element =
+        document.createElement("div");
+
+    element.textContent =
+        value === null ||
+        value === undefined
+            ? ""
+            : String(value);
+
+    return element.innerHTML;
+}
+
+
+function formatDeadline(value) {
+    if (!value) {
+        return "Not specified";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleString();
+}
+
+
+function renderListings(listings) {
+    if (!Array.isArray(listings) ||
+        listings.length === 0) {
+
+        gridElement.innerHTML = `
+            <div class="card">
+                <p>No available food listings were found.</p>
+            </div>
+        `;
+
+        return;
+    }
+
+    gridElement.innerHTML =
+        listings.map(function (item) {
+            const imageSection =
+                item.imageUrl
+                    ? `
+                        <img
+                            src="${safeText(item.imageUrl)}"
+                            alt="${safeText(item.foodName || "Food")}"
+                        >
+                    `
+                    : `
+                        <div class="meta">
+                            No food photograph
+                        </div>
+                    `;
+
+            return `
+                <article class="card listing-card">
+
+                    <div class="listing-image">
+                        ${imageSection}
+                    </div>
+
+                    <div class="listing-body">
+
+                        <h3>
+                            ${safeText(
+                                item.foodName ||
+                                "Unnamed food"
+                            )}
+                        </h3>
+
+                        <p class="meta">
+                            <strong>Category:</strong>
+                            ${safeText(
+                                item.category ||
+                                "Not specified"
+                            )}
+                        </p>
+
+                        <p>
+                            ${safeText(
+                                item.description ||
+                                "No description provided."
+                            )}
+                        </p>
+
+                        <p class="meta">
+                            <strong>Quantity:</strong>
+                            ${safeText(
+                                item.quantity ||
+                                "Not specified"
+                            )}
+
+                            <br>
+
+                            <strong>Collection area:</strong>
+                            ${safeText(
+                                item.location ||
+                                "Not specified"
+                            )}
+
+                            <br>
+
+                            <strong>Deadline:</strong>
+                            ${safeText(
+                                formatDeadline(
+                                    item.expiryTime
+                                )
+                            )}
+
+                            <br>
+
+                            <strong>Allergy information:</strong>
+                            ${safeText(
+                                item.allergyInfo ||
+                                "Not specified"
+                            )}
+
+                            <br>
+
+                            <strong>Donor:</strong>
+                            ${safeText(
+                                item.donorName ||
+                                "ShareBite user"
+                            )}
+                        </p>
+
+                        <a
+                            class="btn outline"
+                            href="messages.html"
+                        >
+                            Message donor
+                        </a>
+
+                    </div>
+                </article>
+            `;
+        }).join("");
+}
+
+
+async function initialiseBrowsePage() {
+    try {
+        if (
+            !window.ShareBiteAuth ||
+            typeof window.ShareBiteAuth
+                .getIdToken !== "function"
+        ) {
+            throw new Error(
+                "Authentication services could not be loaded."
+            );
+        }
+
+        const token =
+            await window.ShareBiteAuth
+                .getIdToken();
+
+        const claims =
+            decodeJwtPayload(token);
+
+        const nameElement =
+            document.querySelector(
+                "[data-name]"
+            );
+
+        const emailElement =
+            document.querySelector(
+                "[data-email]"
+            );
+
+        if (nameElement) {
+            nameElement.textContent =
+                claims.name ||
+                claims.email ||
+                "ShareBite user";
+        }
+
+        if (emailElement) {
+            emailElement.textContent =
+                claims.email || "";
+        }
+
+        const result =
+            await apiRequest({
+                method: "GET"
+            });
+
+        availableItems =
+            Array.isArray(result)
+                ? result
+                : Array.isArray(result.items)
+                    ? result.items
+                    : [];
+
+        renderListings(availableItems);
+
+        showMessage(
+            messageElement,
+            availableItems.length +
+                " listing(s) loaded.",
+            "success"
+        );
+
+    } catch (error) {
+        console.error(
+            "Browse listings error:",
+            error
+        );
+
+        showMessage(
+            messageElement,
+            error.message ||
+                "Food listings could not be loaded.",
+            "error"
+        );
+
+        gridElement.innerHTML = `
+            <div class="card">
+                <p>
+                    Food listings could not be loaded.
+                </p>
+            </div>
+        `;
+    }
+}
+
+
+searchElement.addEventListener(
+    "input",
+    function () {
+        const searchValue =
+            searchElement.value
+                .trim()
+                .toLowerCase();
+
+        if (!searchValue) {
+            renderListings(availableItems);
+            return;
+        }
+
+        const filteredItems =
+            availableItems.filter(
+                function (item) {
+                    const searchableText = [
+                        item.foodName,
+                        item.category,
+                        item.location,
+                        item.description,
+                        item.donorName
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+                    return searchableText.includes(
+                        searchValue
+                    );
+                }
+            );
+
+        renderListings(filteredItems);
+    }
+);
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initialiseBrowsePage
+);
+</script>
+</body>
+</html>
