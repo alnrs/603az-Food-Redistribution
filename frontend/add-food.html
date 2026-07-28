@@ -35,7 +35,7 @@
 
             <a
                 href="#"
-                onclick="logoutUser(event);"
+                onclick="logoutUser(event); return false;"
             >
                 Sign out
             </a>
@@ -45,8 +45,14 @@
 
             <header class="top">
                 <div>
-                    <strong data-name>User</strong>
-                    <div class="meta" data-email></div>
+                    <strong data-name>
+                        User
+                    </strong>
+
+                    <div
+                        class="meta"
+                        data-email
+                    ></div>
                 </div>
 
                 <button
@@ -155,7 +161,7 @@
                                     id="collectionArea"
                                     name="collectionArea"
                                     type="text"
-                                    placeholder="Example: Coventry CV1 area"
+                                    placeholder="Example: Coventry CV1"
                                     required
                                 >
                             </div>
@@ -260,6 +266,15 @@
     <script src="js/config.js"></script>
     <script src="js/common.js"></script>
     <script src="js/auth.js"></script>
+
+    <!--
+        api.js expects a global idToken variable.
+        This creates it before api.js is loaded.
+    -->
+    <script>
+        var idToken = "";
+    </script>
+
     <script src="js/api.js"></script>
 
     <script>
@@ -267,101 +282,179 @@
 
         let userClaims = null;
 
-function decodeJwtPayload(token) {
-    const payload = token.split(".")[1];
-
-    const normalisedPayload = payload
-        .replace(/-/g, "+")
-        .replace(/_/g, "/");
-
-    const decodedPayload = decodeURIComponent(
-        window
-            .atob(normalisedPayload)
-            .split("")
-            .map(function (character) {
-                return "%" +
-                    (
-                        "00" +
-                        character
-                            .charCodeAt(0)
-                            .toString(16)
-                    ).slice(-2);
-            })
-            .join("")
-    );
-
-    return JSON.parse(decodedPayload);
-}
-
-document.addEventListener(
-    "DOMContentLoaded",
-    async function () {
-        try {
-            const idToken =
-                await window.ShareBiteAuth.getIdToken();
-
-            userClaims =
-                decodeJwtPayload(idToken);
-
-            const nameElement =
-                document.querySelector("[data-name]");
-
-            const emailElement =
-                document.querySelector("[data-email]");
-
-            if (nameElement) {
-                nameElement.textContent =
-                    userClaims.name ||
-                    userClaims.email ||
-                    "ShareBite user";
-            }
-
-            if (emailElement) {
-                emailElement.textContent =
-                    userClaims.email || "";
-            }
-
-            const expiryInput =
-                document.getElementById("expiryTime");
-
-            const now = new Date();
-
-            now.setMinutes(
-                now.getMinutes() -
-                now.getTimezoneOffset()
+        const listingForm =
+            document.getElementById(
+                "foodListingForm"
             );
 
-            expiryInput.min =
-                now.toISOString().slice(0, 16);
-        } catch (error) {
-            console.error(
-                "Authentication check failed:",
-                error
+        const publishButton =
+            document.getElementById(
+                "publishButton"
             );
 
-            window.location.href =
-                "login.html";
-        }
-    }
-);
+        const listingMessage =
+            document.getElementById(
+                "listingMessage"
+            );
 
         const photoInput =
             document.getElementById("photo");
 
-        const preview =
+        const previewContainer =
             document.getElementById("preview");
 
         const previewImage =
-            document.getElementById("previewImg");
+            document.getElementById(
+                "previewImg"
+            );
 
-        const messageBox =
-            document.getElementById("listingMessage");
+        function decodeJwtPayload(token) {
+            if (
+                !token ||
+                typeof token !== "string"
+            ) {
+                throw new Error(
+                    "A valid authentication token was not received."
+                );
+            }
 
-        const listingForm =
-            document.getElementById("foodListingForm");
+            const tokenParts = token.split(".");
 
-        const publishButton =
-            document.getElementById("publishButton");
+            if (tokenParts.length !== 3) {
+                throw new Error(
+                    "The authentication token is invalid."
+                );
+            }
+
+            let encodedPayload =
+                tokenParts[1]
+                    .replace(/-/g, "+")
+                    .replace(/_/g, "/");
+
+            while (
+                encodedPayload.length % 4 !== 0
+            ) {
+                encodedPayload += "=";
+            }
+
+            const decodedPayload =
+                window.atob(encodedPayload);
+
+            const jsonPayload =
+                decodeURIComponent(
+                    decodedPayload
+                        .split("")
+                        .map(function (
+                            character
+                        ) {
+                            return (
+                                "%" +
+                                (
+                                    "00" +
+                                    character
+                                        .charCodeAt(0)
+                                        .toString(16)
+                                ).slice(-2)
+                            );
+                        })
+                        .join("")
+                );
+
+            return JSON.parse(jsonPayload);
+        }
+
+        async function initialisePage() {
+            try {
+                if (
+                    !window.ShareBiteAuth ||
+                    typeof window.ShareBiteAuth
+                        .getIdToken !== "function"
+                ) {
+                    throw new Error(
+                        "Authentication services could not be loaded."
+                    );
+                }
+
+                /*
+                 * Get a valid Cognito token.
+                 * The global variable is used by api.js.
+                 */
+                idToken =
+                    await window.ShareBiteAuth
+                        .getIdToken();
+
+                /*
+                 * Also store it for other pages and scripts.
+                 */
+                localStorage.setItem(
+                    "sharebiteIdToken",
+                    idToken
+                );
+
+                userClaims =
+                    decodeJwtPayload(idToken);
+
+                const nameElement =
+                    document.querySelector(
+                        "[data-name]"
+                    );
+
+                const emailElement =
+                    document.querySelector(
+                        "[data-email]"
+                    );
+
+                if (nameElement) {
+                    nameElement.textContent =
+                        userClaims.name ||
+                        userClaims.email ||
+                        "ShareBite user";
+                }
+
+                if (emailElement) {
+                    emailElement.textContent =
+                        userClaims.email || "";
+                }
+
+                const expiryInput =
+                    document.getElementById(
+                        "expiryTime"
+                    );
+
+                const currentTime =
+                    new Date();
+
+                currentTime.setMinutes(
+                    currentTime.getMinutes() -
+                    currentTime.getTimezoneOffset()
+                );
+
+                expiryInput.min =
+                    currentTime
+                        .toISOString()
+                        .slice(0, 16);
+
+            } catch (error) {
+                console.error(
+                    "Page authentication failed:",
+                    error
+                );
+
+                showMessage(
+                    listingMessage,
+                    "Your login session has expired. Redirecting to sign in.",
+                    "error"
+                );
+
+                window.setTimeout(
+                    function () {
+                        window.location.href =
+                            "login.html";
+                    },
+                    1500
+                );
+            }
+        }
 
         photoInput.addEventListener(
             "change",
@@ -379,22 +472,30 @@ document.addEventListener(
                     "image/webp"
                 ];
 
-                const maximumSize =
+                const maximumFileSize =
                     5 * 1024 * 1024;
 
                 if (
                     !acceptedTypes.includes(
                         selectedFile.type
                     ) ||
-                    selectedFile.size > maximumSize
+                    selectedFile.size >
+                        maximumFileSize
                 ) {
                     showMessage(
-                        messageBox,
+                        listingMessage,
                         "Use JPG, PNG or WebP up to 5 MB.",
                         "error"
                     );
 
                     photoInput.value = "";
+                    previewImage.removeAttribute(
+                        "src"
+                    );
+
+                    previewContainer.classList
+                        .remove("show");
+
                     return;
                 }
 
@@ -403,7 +504,9 @@ document.addEventListener(
                         selectedFile
                     );
 
-                preview.classList.add("show");
+                previewContainer.classList.add(
+                    "show"
+                );
             }
         );
 
@@ -416,54 +519,80 @@ document.addEventListener(
                 publishButton.textContent =
                     "Publishing...";
 
+                hideMessage(listingMessage);
+
                 try {
-                    if (!userClaims) {
-                        throw new Error(
-                            "Your login session could not be found. Please sign in again."
-                        );
-                    }
+                    /*
+                     * Refresh the token before every
+                     * protected POST request.
+                     */
+                    idToken =
+                        await window.ShareBiteAuth
+                            .getIdToken();
 
-                    const foodName =
+                    localStorage.setItem(
+                        "sharebiteIdToken",
+                        idToken
+                    );
+
+                    userClaims =
+                        decodeJwtPayload(idToken);
+
+                    const foodNameValue =
                         document
-                            .getElementById("foodName")
+                            .getElementById(
+                                "foodName"
+                            )
                             .value
                             .trim();
 
-                    const category =
+                    const categoryValue =
                         document
-                            .getElementById("category")
+                            .getElementById(
+                                "category"
+                            )
                             .value;
 
-                    const description =
+                    const descriptionValue =
                         document
-                            .getElementById("description")
+                            .getElementById(
+                                "description"
+                            )
                             .value
                             .trim();
 
-                    const quantity =
+                    const quantityValue =
                         document
-                            .getElementById("quantity")
+                            .getElementById(
+                                "quantity"
+                            )
                             .value
                             .trim();
 
-                    const collectionArea =
+                    const collectionAreaValue =
                         document
-                            .getElementById("collectionArea")
+                            .getElementById(
+                                "collectionArea"
+                            )
                             .value
                             .trim();
 
-                    const expiryTime =
+                    const expiryTimeValue =
                         document
-                            .getElementById("expiryTime")
+                            .getElementById(
+                                "expiryTime"
+                            )
                             .value;
 
-                    const allergyInfo =
+                    const allergyInfoValue =
                         document
-                            .getElementById("allergyInfo")
+                            .getElementById(
+                                "allergyInfo"
+                            )
                             .value
                             .trim();
 
-                    const storageInstructions =
+                    const storageValue =
                         document
                             .getElementById(
                                 "storageInstructions"
@@ -471,20 +600,60 @@ document.addEventListener(
                             .value
                             .trim();
 
+                    if (!foodNameValue) {
+                        throw new Error(
+                            "Please enter the food name."
+                        );
+                    }
+
+                    if (!descriptionValue) {
+                        throw new Error(
+                            "Please enter a description."
+                        );
+                    }
+
+                    if (!quantityValue) {
+                        throw new Error(
+                            "Please enter the quantity."
+                        );
+                    }
+
+                    if (!collectionAreaValue) {
+                        throw new Error(
+                            "Please enter the collection area."
+                        );
+                    }
+
+                    if (!expiryTimeValue) {
+                        throw new Error(
+                            "Please select a collection deadline."
+                        );
+                    }
+
                     const listingData = {
-                        foodName: foodName,
-                        category: category,
-                        description: description,
-                        quantity: quantity,
+                        foodName:
+                            foodNameValue,
 
-                        // Backend still receives the expected
-                        // DynamoDB attribute name "location".
-                        location: collectionArea,
+                        category:
+                            categoryValue,
 
-                        expiryTime: expiryTime,
-                        allergyInfo: allergyInfo,
+                        description:
+                            descriptionValue,
+
+                        quantity:
+                            quantityValue,
+
+                        location:
+                            collectionAreaValue,
+
+                        expiryTime:
+                            expiryTimeValue,
+
+                        allergyInfo:
+                            allergyInfoValue,
+
                         storageInstructions:
-                            storageInstructions,
+                            storageValue,
 
                         donorName:
                             userClaims.name ||
@@ -494,7 +663,8 @@ document.addEventListener(
                         ownerUserId:
                             userClaims.sub,
 
-                        status: "Available"
+                        status:
+                            "Available"
                     };
 
                     const response =
@@ -506,25 +676,31 @@ document.addEventListener(
                         });
 
                     showMessage(
-                        messageBox,
+                        listingMessage,
                         response.message ||
-                            "Listing created successfully.",
+                            "Food listing published successfully.",
                         "success"
                     );
 
                     listingForm.reset();
-                    preview.classList.remove("show");
-                    previewImage.removeAttribute("src");
+
+                    previewImage.removeAttribute(
+                        "src"
+                    );
+
+                    previewContainer.classList
+                        .remove("show");
+
                 } catch (error) {
                     console.error(
-                        "Listing creation failed:",
+                        "Food listing failed:",
                         error
                     );
 
                     showMessage(
-                        messageBox,
+                        listingMessage,
                         error.message ||
-                            "The listing could not be created.",
+                            "The food listing could not be published.",
                         "error"
                     );
                 } finally {
@@ -533,6 +709,11 @@ document.addEventListener(
                         "Publish listing";
                 }
             }
+        );
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialisePage
         );
     </script>
 </body>
