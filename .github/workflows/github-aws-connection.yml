@@ -1,0 +1,67 @@
+name: ShareBite AWS Infrastructure Verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  verify:
+
+    name: Verify AWS Infrastructure
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5
+
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Verify AWS Identity
+        run: |
+          aws sts get-caller-identity
+
+      - name: Verify Lambda
+        run: |
+          aws lambda get-function \
+          --function-name sharebite603clean-backend
+
+      - name: Verify API Gateway
+        run: |
+          aws apigatewayv2 get-apis
+
+      - name: Verify DynamoDB
+        run: |
+          aws dynamodb list-tables
+
+      - name: Verify SNS
+        run: |
+          aws sns list-topics
+
+      - name: Verify CloudWatch
+        run: |
+          aws logs describe-log-groups
+
+      - name: Verify S3 Buckets
+        run: |
+          aws s3 ls
+
+      - name: Workflow Summary
+        run: |
+          echo "=================================="
+          echo "GitHub successfully connected AWS"
+          echo "Lambda Verified"
+          echo "API Gateway Verified"
+          echo "DynamoDB Verified"
+          echo "SNS Verified"
+          echo "CloudWatch Verified"
+          echo "S3 Verified"
+          echo "=================================="
